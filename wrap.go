@@ -5,15 +5,15 @@ import (
 	"net/url"
 )
 
-type WrapFunc func(HandlerFunc)HandlerFunc
+type WrapFunc func(HandlerFunc) HandlerFunc
 
 // Resources wrap struct
-type Wrap struct{
-	f WrapFunc
+type Wrap struct {
+	f   WrapFunc
 	res interface{}
 }
 
-// Make a new resources wrap struct for `res` with `f` function
+// Make a new resources wrap struct for resource `res` with function `f`
 func NewWrap(f WrapFunc, res interface{}) (wrap *Wrap, err error) {
 	switch res.(type) {
 	case Get, Post, Put, Delete, Patch:

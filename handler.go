@@ -148,7 +148,11 @@ func (h *Hanler) rest(res interface{}) http.HandlerFunc {
 func (h *Hanler) rpc(f HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		status, data := f(r.Form)
-		h.writeJson(w, status, data)
+		if err := h.writeJson(w, status, data); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			h.err(err)
+		}
 	}
 }
 
@@ -171,20 +175,21 @@ func (h *Hanler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler.ServeHTTP(w, r)
 }
 
-func (h *Hanler) writeJson(w http.ResponseWriter, status int, data interface{}) {
+func (h *Hanler) writeJson(w http.ResponseWriter, status int, data interface{}) error {
 	content, err := json.Marshal(data)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		return err
 	}
 	w.WriteHeader(status)
-	if _, err := w.Write(content); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-	}
+	_, err = w.Write(content)
+	return err
 }
 
 func (h *Hanler) writeErr(w http.ResponseWriter, apierr apiErr) {
-	h.writeJson(w, apierr.status, apierr.message)
+	if err := h.writeJson(w, apierr.status, apierr.message); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		h.err(err)
+	}
+
 }
