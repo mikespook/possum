@@ -2,18 +2,19 @@ package possum
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 )
 
+type WrapFunc func(HandlerFunc)HandlerFunc
+
 // Resources wrap struct
 type Wrap struct{
-	f HandlerFunc
+	f WrapFunc
 	res interface{}
 }
 
 // Make a new resources wrap struct for `res` with `f` function
-func NewWrap(f HandlerFunc, res interface{}) (wrap *Wrap, err error) {
+func NewWrap(f WrapFunc, res interface{}) (wrap *Wrap, err error) {
 	switch res.(type) {
 	case Get, Post, Put, Delete, Patch:
 	default:
@@ -24,51 +25,36 @@ func NewWrap(f HandlerFunc, res interface{}) (wrap *Wrap, err error) {
 }
 
 func (wrap *Wrap) Get(params url.Values) (int, interface{}) {
-	if status, err := wrap.f(params); status != http.StatusOK {
-		return status, err
-	}
 	if res, ok := wrap.res.(Get); ok {
-		return res.Get(params)
+		return wrap.f(res.Get)(params)
 	}
 	return (&NoGet{}).Get(params)
 }
 
 func (wrap *Wrap) Post(params url.Values) (int, interface{}) {
-	if status, err := wrap.f(params); status != http.StatusOK {
-		return status, err
-	}
 	if res, ok := wrap.res.(Post); ok {
-		return res.Post(params)
+		return wrap.f(res.Post)(params)
 	}
 	return (&NoPost{}).Post(params)
 }
 
 func (wrap *Wrap) Put(params url.Values) (int, interface{}) {
-	if status, err := wrap.f(params); status != http.StatusOK {
-		return status, err
-	}
 	if res, ok := wrap.res.(Put); ok {
-		return res.Put(params)
+		return wrap.f(res.Put)(params)
 	}
 	return (&NoPut{}).Put(params)
 }
 
 func (wrap *Wrap) Delete(params url.Values) (int, interface{}) {
-	if status, err := wrap.f(params); status != http.StatusOK {
-		return status, err
-	}
 	if res, ok := wrap.res.(Delete); ok {
-		return res.Delete(params)
+		return wrap.f(res.Delete)(params)
 	}
 	return (&NoDelete{}).Delete(params)
 }
 
 func (wrap *Wrap) Patch(params url.Values) (int, interface{}) {
-	if status, err := wrap.f(params); status != http.StatusOK {
-		return status, err
-	}
 	if res, ok := wrap.res.(Patch); ok {
-		return res.Patch(params)
+		return wrap.f(res.Patch)(params)
 	}
 	return (&NoPatch{}).Patch(params)
 }
