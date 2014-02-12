@@ -7,13 +7,13 @@ import (
 )
 
 // Resources wrap struct
-type ResWrap struct{
+type Wrap struct{
 	f HandlerFunc
 	res interface{}
 }
 
 // Make a new resources wrap struct for `res` with `f` function
-func NewResWrap(f HandlerFunc, res interface{}) (wrap *ResWrap, err error) {
+func NewWrap(f HandlerFunc, res interface{}) (wrap *Wrap, err error) {
 	switch res.(type) {
 	case Get, Post, Put, Delete, Patch:
 	default:
@@ -23,7 +23,7 @@ func NewResWrap(f HandlerFunc, res interface{}) (wrap *ResWrap, err error) {
 	return
 }
 
-func (wrap *ResWrap) Get(params url.Values) (int, interface{}) {
+func (wrap *Wrap) Get(params url.Values) (int, interface{}) {
 	if status, err := wrap.f(params); status != http.StatusOK {
 		return status, err
 	}
@@ -33,7 +33,7 @@ func (wrap *ResWrap) Get(params url.Values) (int, interface{}) {
 	return (&NoGet{}).Get(params)
 }
 
-func (wrap *ResWrap) Post(params url.Values) (int, interface{}) {
+func (wrap *Wrap) Post(params url.Values) (int, interface{}) {
 	if status, err := wrap.f(params); status != http.StatusOK {
 		return status, err
 	}
@@ -43,7 +43,7 @@ func (wrap *ResWrap) Post(params url.Values) (int, interface{}) {
 	return (&NoPost{}).Post(params)
 }
 
-func (wrap *ResWrap) Put(params url.Values) (int, interface{}) {
+func (wrap *Wrap) Put(params url.Values) (int, interface{}) {
 	if status, err := wrap.f(params); status != http.StatusOK {
 		return status, err
 	}
@@ -53,7 +53,7 @@ func (wrap *ResWrap) Put(params url.Values) (int, interface{}) {
 	return (&NoPut{}).Put(params)
 }
 
-func (wrap *ResWrap) Delete(params url.Values) (int, interface{}) {
+func (wrap *Wrap) Delete(params url.Values) (int, interface{}) {
 	if status, err := wrap.f(params); status != http.StatusOK {
 		return status, err
 	}
@@ -63,7 +63,7 @@ func (wrap *ResWrap) Delete(params url.Values) (int, interface{}) {
 	return (&NoDelete{}).Delete(params)
 }
 
-func (wrap *ResWrap) Patch(params url.Values) (int, interface{}) {
+func (wrap *Wrap) Patch(params url.Values) (int, interface{}) {
 	if status, err := wrap.f(params); status != http.StatusOK {
 		return status, err
 	}
