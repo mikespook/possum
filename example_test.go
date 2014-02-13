@@ -44,7 +44,7 @@ func ExampleNewWrap() {
 			return h(params)
 		}
 	}
-	wrap, err := possum.NewWrap(f , &Foobar{})
+	wrap, err := possum.Wrap(f , &Foobar{})
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -58,7 +58,7 @@ func ExampleNewWrap() {
 
 func ExampleGlobalWrap() {
 	h := possum.NewHandler()
-	h.Wrapper = func(h possum.WrapHandle) http.HandlerFunc {
+	h.WrapHandler = func(h possum.Wrapper) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			status, _ := h(w, r)
 			fmt.Printf("[%d] %s:%s \"%s\"", status, r.RemoteAddr, r.Method, r.URL.String())
