@@ -13,7 +13,7 @@ func (err apiErr) Error() string {
 	return err.message
 }
 
-func newApiErr(status int, format string, a ...interface{}) apiErr {
+func Errorf(status int, format string, a ...interface{}) apiErr {
 	return apiErr{
 		status:  status,
 		message: fmt.Sprintf(format, a...),

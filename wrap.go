@@ -5,15 +5,16 @@ import (
 	"net/url"
 )
 
+// A wrapper function to HandlerFunc
 type WrapFunc func(HandlerFunc) HandlerFunc
 
-// Resources wrap struct
+// Objects wrapping Resources 
 type Wrap struct {
 	f   WrapFunc
 	res interface{}
 }
 
-// Make a new resources wrap struct for resource `res` with function `f`
+// NewWrap returns a new Wrap object to add the resource a wrapper function.
 func NewWrap(f WrapFunc, res interface{}) (wrap *Wrap, err error) {
 	switch res.(type) {
 	case Get, Post, Put, Delete, Patch:
@@ -24,6 +25,7 @@ func NewWrap(f WrapFunc, res interface{}) (wrap *Wrap, err error) {
 	return
 }
 
+// Wrapping Get
 func (wrap *Wrap) Get(params url.Values) (int, interface{}) {
 	if res, ok := wrap.res.(Get); ok {
 		return wrap.f(res.Get)(params)
@@ -31,6 +33,7 @@ func (wrap *Wrap) Get(params url.Values) (int, interface{}) {
 	return (&NoGet{}).Get(params)
 }
 
+// Wrapping Post
 func (wrap *Wrap) Post(params url.Values) (int, interface{}) {
 	if res, ok := wrap.res.(Post); ok {
 		return wrap.f(res.Post)(params)
@@ -38,6 +41,7 @@ func (wrap *Wrap) Post(params url.Values) (int, interface{}) {
 	return (&NoPost{}).Post(params)
 }
 
+// Wrapping Put
 func (wrap *Wrap) Put(params url.Values) (int, interface{}) {
 	if res, ok := wrap.res.(Put); ok {
 		return wrap.f(res.Put)(params)
@@ -45,6 +49,7 @@ func (wrap *Wrap) Put(params url.Values) (int, interface{}) {
 	return (&NoPut{}).Put(params)
 }
 
+// Wrapping Delete
 func (wrap *Wrap) Delete(params url.Values) (int, interface{}) {
 	if res, ok := wrap.res.(Delete); ok {
 		return wrap.f(res.Delete)(params)
@@ -52,6 +57,7 @@ func (wrap *Wrap) Delete(params url.Values) (int, interface{}) {
 	return (&NoDelete{}).Delete(params)
 }
 
+// Wrapping Patch
 func (wrap *Wrap) Patch(params url.Values) (int, interface{}) {
 	if res, ok := wrap.res.(Patch); ok {
 		return wrap.f(res.Patch)(params)
