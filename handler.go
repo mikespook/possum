@@ -20,7 +20,7 @@ const (
 type HandlerFunc func(url.Values) (int, interface{})
 
 // Wrapping function
-type Wrapper func(w http.ResponseWriter, r *http.Request) (int, interface{})
+type wrapper func(w http.ResponseWriter, r *http.Request) (int, interface{})
 
 type (
 	// Interface for handling GET request.
@@ -47,30 +47,35 @@ type (
 
 // Objects implementing the Get interface response status NotImplemented(501).
 type NoGet struct{}
+
 func (NoGet) Get(params url.Values) (int, interface{}) {
 	return http.StatusNotImplemented, "GET is not supported"
 }
 
 // Objects implementing the Post interface response status NotImplemented(501).
-type NoPost   struct{}
+type NoPost struct{}
+
 func (NoPost) Post(params url.Values) (int, interface{}) {
 	return http.StatusNotImplemented, "POST is not supported"
 }
 
 // Objects implementing the Put interface response status NotImplemented(501).
-type NoPut    struct{}
+type NoPut struct{}
+
 func (NoPut) Put(params url.Values) (int, interface{}) {
 	return http.StatusNotImplemented, "PUT is not supported"
 }
 
 // Objects implementing the Delete interface response status NotImplemented(501).
 type NoDelete struct{}
+
 func (NoDelete) Delete(params url.Values) (int, interface{}) {
 	return http.StatusNotImplemented, "DELETE is not supported"
 }
 
 // Objects implementing the Patch interface response status NotImplemented(501).
-type NoPatch  struct{}
+type NoPatch struct{}
+
 func (NoPatch) Patch(params url.Values) (int, interface{}) {
 	return http.StatusNotImplemented, "PATCH is not supported"
 }
@@ -79,7 +84,8 @@ func (NoPatch) Patch(params url.Values) (int, interface{}) {
 type Hanler struct {
 	mux          *http.ServeMux
 	ErrorHandler func(error)
-	WrapHandler	func(Wrapper) http.HandlerFunc
+	PreHandler   func(r *http.Request) (int, error)
+	PostHandler  func(r *http.Request, status int, data interface{})
 }
 
 // NewHandler returns a new Handler.
@@ -98,13 +104,20 @@ func (h *Hanler) err(err error) {
 }
 
 // Internal wrapping handler
-func (h *Hanler) wrap(f Wrapper) http.HandlerFunc {
-	if h.WrapHandler == nil {
-		return func(w http.ResponseWriter, r *http.Request) {
-			f(w, r)
+func (h *Hanler) wrap(f wrapper) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if h.PreHandler != nil {
+			status, err := h.PreHandler(r)
+			if err != nil {
+				h.writeErr(w, Errorf(status, err.Error()))
+				return
+			}
+		}
+		status, data := f(w, r)
+		if h.PostHandler != nil {
+			h.PostHandler(r, status, data)
 		}
 	}
-	return h.WrapHandler(f)
 }
 
 // AddResource adds a resource to a path. The resource must implement at least one of Get, Post, Put, Delete and Patch interface.
@@ -125,7 +138,7 @@ func (h *Hanler) AddRPC(pattern string, f HandlerFunc) {
 }
 
 // Internal wraper for AddResource.
-func (h *Hanler) rest(res interface{}) Wrapper {
+func (h *Hanler) rest(res interface{}) wrapper {
 	return func(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 		var hf HandlerFunc
 		switch r.Method {
@@ -166,7 +179,7 @@ func (h *Hanler) rest(res interface{}) Wrapper {
 }
 
 // Internal wraper for AddRPC.
-func (h *Hanler) rpc(f HandlerFunc) Wrapper {
+func (h *Hanler) rpc(f HandlerFunc) wrapper {
 	return func(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 		status, data = f(r.Form)
 		if err := h.writeJson(w, status, data); err != nil {

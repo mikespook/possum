@@ -8,7 +8,7 @@ import (
 // A wrapper function to HandlerFunc
 type wrapFunc func(HandlerFunc) HandlerFunc
 
-// Objects wrapping Resources 
+// Objects wrapping Resources
 type wrap struct {
 	f   wrapFunc
 	res interface{}

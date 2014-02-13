@@ -3,6 +3,7 @@ package possum_test
 import (
 	"fmt"
 	"github.com/mikespook/possum"
+	"net"
 	"net/http"
 	"net/url"
 )
@@ -44,7 +45,7 @@ func ExampleNewWrap() {
 			return h(params)
 		}
 	}
-	wrap, err := possum.Wrap(f , &Foobar{})
+	wrap, err := possum.Wrap(f, &Foobar{})
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -58,11 +59,19 @@ func ExampleNewWrap() {
 
 func ExampleGlobalWrap() {
 	h := possum.NewHandler()
-	h.WrapHandler = func(h possum.Wrapper) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			status, _ := h(w, r)
-			fmt.Printf("[%d] %s:%s \"%s\"", status, r.RemoteAddr, r.Method, r.URL.String())
+	h.PreHandler = func(r *http.Request) (int, error) {
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			return http.StatusInternalServerError, err
 		}
+		if host != "127.0.0.1" {
+			return http.StatusForbidden, fmt.Errorf("Localhost only")
+		}
+		return http.StatusOK, nil
+	}
+
+	h.PostHandler = func(r *http.Request, status int, data interface{}) {
+		fmt.Printf("[%d] %s:%s \"%s\"", status, r.RemoteAddr, r.Method, r.URL.String())
 	}
 	if err := h.AddResource("/rest/test", &Foobar{}); err != nil {
 		fmt.Println(err)
