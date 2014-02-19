@@ -26,13 +26,16 @@ The Possum's Handler implementing http.HandlerFunc interface can be set to http.
 
 Define a rpc function:
 
+```go
 	// foobar responses intpu params.
 	func foobar(params url.Values) (status int, data interface{}) {
 		return http.StatusOK, params
 	}
+```
 
 Define a resource implementing interfaces:
 
+```go
 	type Foobar struct {
 		data string
 		possum.NoDelete
@@ -48,19 +51,25 @@ Define a resource implementing interfaces:
 		foobar.data = params.Get("data")
 		return http.StatusOK, ""
 	}
+```
 
 Get a new handler of possum:
 
+```go
 	h := possum.NewHandler()
+```
 
 Assign a custome error handler:
 
+```go
 	h.ErrorHandler = func(err error) {
 		fmt.Println(err)
 	}
+```
 
 A wrap handler is usually used for global pre-checking or custome logs:
 
+```go
 	h.PreHandler = func(r *http.Request) (int, error) {
 		host, port, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
@@ -75,24 +84,32 @@ A wrap handler is usually used for global pre-checking or custome logs:
 	h.PostHandler = func(r *http.Request, status int) {
 		fmt.Printf("[%d] %s:%s \"%s\"", status, r.RemoteAddr, r.Method, r.URL.String())		
 	}
+```
 
 Bind the rpc function to a path:
 
+```go
 	h.AddRPC("/rpc/test", a)
+```
 
 Bind the resource to a path:
 
+```go
 	if err := h.AddResource("/rest/test", &Foobar{}); err != nil {
 		fmt.Println(err)
 		return
 	}
+```
 
 Listen and serve it:
 
+```go
 	http.ListenAndServe(":8080", h)
+```
 
 You can add some wrap functions to a rpc directly:
 
+```go
 	func checkSecret(handler possum.HandlerFunc) possum.HandlerFunc {
 		return func(params url.Values) (status int, data interface{}) {
 			if params.Get("secret") != secret {
@@ -103,9 +120,11 @@ You can add some wrap functions to a rpc directly:
 	}
 
 	h.AddRPC("/rpc/test", checkSecret(a))
+```
 
 But for resources, `Wrap` function will be needed:
 
+```go
 	wrap, err := possum.Wrap(checkSecret, &Foobar{})
 	if err != nil {
 		fmt.Println(err)
@@ -115,6 +134,7 @@ But for resources, `Wrap` function will be needed:
 		fmt.Println(err)
 		return
 	}
+```
 
 Contributors
 ============
