@@ -5,14 +5,16 @@ Possum
 
 Possum is a micro web-api framework for Go.
 
-Possum has not been officially released yet, as it is still in active development.
+_Possum has not been officially released yet, as it is still in active development._
 
 Install
 =======
 
 Install the package:
 
-> $ go get github.com/mikespook/possum
+```bash
+go get github.com/mikespook/possum
+```
 
 Usage
 =====
@@ -27,30 +29,30 @@ The Possum's Handler implementing http.HandlerFunc interface can be set to http.
 Define a rpc function:
 
 ```go
-	// foobar responses intpu params.
-	func foobar(params url.Values) (status int, data interface{}) {
-		return http.StatusOK, params
-	}
+// foobar responses intpu params.
+func foobar(params url.Values) (status int, data interface{}) {
+	return http.StatusOK, params
+}
 ```
 
 Define a resource implementing interfaces:
 
 ```go
-	type Foobar struct {
-		data string
-		possum.NoDelete
-		possum.NoPatch
-		possum.NoPost
-	}
+type Foobar struct {
+	data string
+	possum.NoDelete
+	possum.NoPatch
+	possum.NoPost
+}
 
-	func (foobar *Foobar) Get(params url.Values) (status int, data interface{}) {
-		return http.StatusOK, foobar.data
-	}
+func (foobar *Foobar) Get(params url.Values) (status int, data interface{}) {
+	return http.StatusOK, foobar.data
+}
 
-	func (foobar *Foobar) Put(params url.Values) (status int, data interface{}) {
-		foobar.data = params.Get("data")
-		return http.StatusOK, ""
-	}
+func (foobar *Foobar) Put(params url.Values) (status int, data interface{}) {
+	foobar.data = params.Get("data")
+	return http.StatusOK, ""
+}
 ```
 
 Get a new handler of possum:
@@ -62,78 +64,78 @@ Get a new handler of possum:
 Assign a custome error handler:
 
 ```go
-	h.ErrorHandler = func(err error) {
-		fmt.Println(err)
-	}
+h.ErrorHandler = func(err error) {
+	fmt.Println(err)
+}
 ```
 
 A wrap handler is usually used for global pre-checking or custome logs:
 
 ```go
-	h.PreHandler = func(r *http.Request) (int, error) {
-		host, port, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			return http.StatusInternalServerError, err
-		}
-		if host != "127.0.0.1" {
-			return http.StatusForbidden, fmt.Errorf("Localhost only")
-		}
-		return http.StatusOK, nil
+h.PreHandler = func(r *http.Request) (int, error) {
+	host, port, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return http.StatusInternalServerError, err
 	}
+	if host != "127.0.0.1" {
+		return http.StatusForbidden, fmt.Errorf("Localhost only")
+	}
+	return http.StatusOK, nil
+}
 
-	h.PostHandler = func(r *http.Request, status int) {
-		fmt.Printf("[%d] %s:%s \"%s\"", status, r.RemoteAddr, r.Method, r.URL.String())		
-	}
+h.PostHandler = func(r *http.Request, status int) {
+	fmt.Printf("[%d] %s:%s \"%s\"", status, r.RemoteAddr, r.Method, r.URL.String())		
+}
 ```
 
 Bind the rpc function to a path:
 
 ```go
-	h.AddRPC("/rpc/test", a)
+h.AddRPC("/rpc/test", a)
 ```
 
 Bind the resource to a path:
 
 ```go
-	if err := h.AddResource("/rest/test", &Foobar{}); err != nil {
-		fmt.Println(err)
-		return
-	}
+if err := h.AddResource("/rest/test", &Foobar{}); err != nil {
+	fmt.Println(err)
+	return
+}
 ```
 
 Listen and serve it:
 
 ```go
-	http.ListenAndServe(":8080", h)
+http.ListenAndServe(":8080", h)
 ```
 
 You can add some wrap functions to a rpc directly:
 
 ```go
-	func checkSecret(handler possum.HandlerFunc) possum.HandlerFunc {
-		return func(params url.Values) (status int, data interface{}) {
-			if params.Get("secret") != secret {
-				return http.StatusForbidden, fmt.Errorf("Wrong secret")
-			}
-			return handler(params)
+func checkSecret(handler possum.HandlerFunc) possum.HandlerFunc {
+	return func(params url.Values) (status int, data interface{}) {
+		if params.Get("secret") != secret {
+			return http.StatusForbidden, fmt.Errorf("Wrong secret")
 		}
+		return handler(params)
 	}
+}
 
-	h.AddRPC("/rpc/test", checkSecret(a))
+h.AddRPC("/rpc/test", checkSecret(a))
 ```
 
-But for resources, `Wrap` function will be needed:
+Resources need `Wrap` function:
 
 ```go
-	wrap, err := possum.Wrap(checkSecret, &Foobar{})
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	if err := handler.AddResource("/rest/user", wrap); err != nil {
-		fmt.Println(err)
-		return
-	}
+wrap, err := possum.Wrap(checkSecret, &Foobar{})
+if err != nil {
+	fmt.Println(err)
+	return
+}
+if err := handler.AddResource("/rest/user", wrap); err != nil {
+	fmt.Println(err)
+	return
+}
 ```
 
 Contributors
