@@ -5,7 +5,6 @@ import (
 	"github.com/mikespook/possum"
 	"net"
 	"net/http"
-	"net/url"
 )
 
 type Foobar struct {
@@ -15,9 +14,9 @@ type Foobar struct {
 	possum.NoPut
 }
 
-func (obj *Foobar) Get(params url.Values) (status int, data interface{}) {
+func (obj *Foobar) Get(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 	status = http.StatusOK
-	data = params
+	data = r.Form
 	return
 }
 
@@ -26,9 +25,9 @@ func ExampleAddRPC() {
 	h.ErrorHandler = func(err error) {
 		fmt.Println(err)
 	}
-	a := func(params url.Values) (status int, data interface{}) {
+	a := func(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 		status = http.StatusOK
-		data = params
+		data = r.Form
 		return
 	}
 	h.AddRPC("/rpc/test", a)
@@ -38,11 +37,11 @@ func ExampleAddRPC() {
 func ExampleNewWrap() {
 	h := possum.NewHandler()
 	f := func(h possum.HandlerFunc) possum.HandlerFunc {
-		return func(params url.Values) (int, interface{}) {
-			if params.Get("secret") != "possum" {
+		return func(w http.ResponseWriter, r *http.Request) (int, interface{}) {
+			if r.Form.Get("secret") != "possum" {
 				return http.StatusForbidden, "Wrong secret"
 			}
-			return h(params)
+			return h(w, r)
 		}
 	}
 	wrap, err := possum.Wrap(f, &Foobar{})

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 )
 
 const (
@@ -17,66 +16,63 @@ const (
 )
 
 // Processing function returning HTTP status code and response object witch will be marshaled to JSON.
-type HandlerFunc func(url.Values) (int, interface{})
-
-// Wrapping function
-type wrapper func(w http.ResponseWriter, r *http.Request) (int, interface{})
+type HandlerFunc func(w http.ResponseWriter, r *http.Request) (int, interface{})
 
 type (
 	// Interface for handling GET request.
 	Get interface {
-		Get(url.Values) (int, interface{})
+		Get(w http.ResponseWriter, r *http.Request) (int, interface{})
 	}
 	// Interface for handling PUT request.
 	Put interface {
-		Put(url.Values) (int, interface{})
+		Put(w http.ResponseWriter, r *http.Request) (int, interface{})
 	}
 	// Interface for handling POST request.
 	Post interface {
-		Post(url.Values) (int, interface{})
+		Post(w http.ResponseWriter, r *http.Request) (int, interface{})
 	}
 	// Interface for handling DELETE request.
 	Delete interface {
-		Delete(url.Values) (int, interface{})
+		Delete(w http.ResponseWriter, r *http.Request) (int, interface{})
 	}
 	// Interface for handling PATCH request.
 	Patch interface {
-		Patch(url.Values) (int, interface{})
+		Patch(w http.ResponseWriter, r *http.Request) (int, interface{})
 	}
 )
 
 // Objects implementing the Get interface response status NotImplemented(501).
 type NoGet struct{}
 
-func (NoGet) Get(params url.Values) (int, interface{}) {
+func (NoGet) Get(w http.ResponseWriter, r *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, "GET is not supported"
 }
 
 // Objects implementing the Post interface response status NotImplemented(501).
 type NoPost struct{}
 
-func (NoPost) Post(params url.Values) (int, interface{}) {
+func (NoPost) Post(w http.ResponseWriter, r *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, "POST is not supported"
 }
 
 // Objects implementing the Put interface response status NotImplemented(501).
 type NoPut struct{}
 
-func (NoPut) Put(params url.Values) (int, interface{}) {
+func (NoPut) Put(w http.ResponseWriter, r *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, "PUT is not supported"
 }
 
 // Objects implementing the Delete interface response status NotImplemented(501).
 type NoDelete struct{}
 
-func (NoDelete) Delete(params url.Values) (int, interface{}) {
+func (NoDelete) Delete(w http.ResponseWriter, r *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, "DELETE is not supported"
 }
 
 // Objects implementing the Patch interface response status NotImplemented(501).
 type NoPatch struct{}
 
-func (NoPatch) Patch(params url.Values) (int, interface{}) {
+func (NoPatch) Patch(w http.ResponseWriter, r *http.Request) (int, interface{}) {
 	return http.StatusNotImplemented, "PATCH is not supported"
 }
 
@@ -104,7 +100,7 @@ func (h *Hanler) err(err error) {
 }
 
 // Internal wrapping handler
-func (h *Hanler) wrap(f wrapper) http.HandlerFunc {
+func (h *Hanler) wrap(f HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if h.PreHandler != nil {
 			status, err := h.PreHandler(r)
@@ -138,7 +134,7 @@ func (h *Hanler) AddRPC(pattern string, f HandlerFunc) {
 }
 
 // Internal wraper for AddResource.
-func (h *Hanler) rest(res interface{}) wrapper {
+func (h *Hanler) rest(res interface{}) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 		var hf HandlerFunc
 		switch r.Method {
@@ -179,9 +175,9 @@ func (h *Hanler) rest(res interface{}) wrapper {
 }
 
 // Internal wraper for AddRPC.
-func (h *Hanler) rpc(f HandlerFunc) wrapper {
+func (h *Hanler) rpc(f HandlerFunc) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
-		status, data = f(r.Form)
+		status, data = f(w, r)
 		if err := h.writeJson(w, status, data); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			errstr := err.Error()
