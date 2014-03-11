@@ -77,7 +77,7 @@ func (NoPatch) Patch(w http.ResponseWriter, r *http.Request) (int, interface{}) 
 }
 
 // Objects implementing the Handler interface can be registered to serve a particular path or subtree in the HTTP server.
-type Hanler struct {
+type Handler struct {
 	mux          *http.ServeMux
 	ErrorHandler func(error)
 	PreHandler   func(r *http.Request) (int, error)
@@ -85,22 +85,22 @@ type Hanler struct {
 }
 
 // NewHandler returns a new Handler.
-func NewHandler() (h *Hanler) {
-	h = &Hanler{
+func NewHandler() (h *Handler) {
+	h = &Handler{
 		mux: http.NewServeMux(),
 	}
 	return
 }
 
 // Internal error handler
-func (h *Hanler) err(err error) {
+func (h *Handler) err(err error) {
 	if h.ErrorHandler != nil {
 		h.ErrorHandler(err)
 	}
 }
 
 // Internal wrapping handler
-func (h *Hanler) wrap(f HandlerFunc) http.HandlerFunc {
+func (h *Handler) wrap(f HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if h.PreHandler != nil {
 			status, err := h.PreHandler(r)
@@ -117,7 +117,7 @@ func (h *Hanler) wrap(f HandlerFunc) http.HandlerFunc {
 }
 
 // AddResource adds a resource to a path. The resource must implement at least one of Get, Post, Put, Delete and Patch interface.
-func (h *Hanler) AddResource(pattern string, res interface{}) (err error) {
+func (h *Handler) AddResource(pattern string, res interface{}) (err error) {
 	switch res.(type) {
 	case Get, Post, Put, Delete, Patch:
 	default:
@@ -128,13 +128,13 @@ func (h *Hanler) AddResource(pattern string, res interface{}) (err error) {
 }
 
 // AddRPC adds a Remote Procedure Call to a path.
-func (h *Hanler) AddRPC(pattern string, f HandlerFunc) {
+func (h *Handler) AddRPC(pattern string, f HandlerFunc) {
 	h.mux.Handle(pattern, h.wrap(h.rpc(f)))
 	return
 }
 
 // Internal wraper for AddResource.
-func (h *Hanler) rest(res interface{}) HandlerFunc {
+func (h *Handler) rest(res interface{}) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 		var hf HandlerFunc
 		switch r.Method {
@@ -175,7 +175,7 @@ func (h *Hanler) rest(res interface{}) HandlerFunc {
 }
 
 // Internal wraper for AddRPC.
-func (h *Hanler) rpc(f HandlerFunc) HandlerFunc {
+func (h *Handler) rpc(f HandlerFunc) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 		status, data = f(w, r)
 		if err := h.writeJson(w, status, data); err != nil {
@@ -190,7 +190,7 @@ func (h *Hanler) rpc(f HandlerFunc) HandlerFunc {
 }
 
 // ServeHTTP calls HandlerFunc
-func (h *Hanler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
 		h.writeErr(w, Errorf(http.StatusBadRequest, "Bad request for `%s`", r.URL.RequestURI()))
 		return
@@ -204,7 +204,7 @@ func (h *Hanler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Internal responsing.
-func (h *Hanler) writeJson(w http.ResponseWriter, status int, data interface{}) error {
+func (h *Handler) writeJson(w http.ResponseWriter, status int, data interface{}) error {
 	content, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -215,7 +215,7 @@ func (h *Hanler) writeJson(w http.ResponseWriter, status int, data interface{}) 
 }
 
 // Internal error responsing.
-func (h *Hanler) writeErr(w http.ResponseWriter, apierr apiErr) {
+func (h *Handler) writeErr(w http.ResponseWriter, apierr apiErr) {
 	if err := h.writeJson(w, apierr.status, apierr.message); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
