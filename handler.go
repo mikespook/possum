@@ -113,6 +113,11 @@ func (h *Handler) wrap(f HandlerFunc) http.HandlerFunc {
 		if h.PostHandler != nil {
 			h.PostHandler(r, status, data)
 		}
+		if err := h.writeJson(w, status, data); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			h.err(err)
+		}
 	}
 }
 
@@ -129,12 +134,7 @@ func (h *Handler) AddResource(pattern string, res interface{}) (err error) {
 
 // AddRPC adds a Remote Procedure Call to a path.
 func (h *Handler) AddRPC(pattern string, f HandlerFunc) {
-	h.mux.Handle(pattern, h.wrap(h.rpc(f)))
-}
-
-// Add adds a raw http.HandlerFunc to a path.
-func (h *Handler) Add(pattern string, f http.HandlerFunc) {
-	h.mux.HandleFunc(pattern, f)
+	h.mux.Handle(pattern, h.wrap(f))
 }
 
 // Internal wraper for AddResource.
@@ -173,23 +173,7 @@ func (h *Handler) rest(res interface{}) HandlerFunc {
 				hf = (&NoPatch{}).Patch
 			}
 		}
-		f := h.rpc(hf)
-		return f(w, r)
-	}
-}
-
-// Internal wraper for AddRPC.
-func (h *Handler) rpc(f HandlerFunc) HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
-		status, data = f(w, r)
-		if err := h.writeJson(w, status, data); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			errstr := err.Error()
-			w.Write([]byte(errstr))
-			h.err(err)
-			return http.StatusInternalServerError, errstr
-		}
-		return
+		return hf(w, r)
 	}
 }
 
