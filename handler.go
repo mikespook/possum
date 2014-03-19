@@ -130,7 +130,11 @@ func (h *Handler) AddResource(pattern string, res interface{}) (err error) {
 // AddRPC adds a Remote Procedure Call to a path.
 func (h *Handler) AddRPC(pattern string, f HandlerFunc) {
 	h.mux.Handle(pattern, h.wrap(h.rpc(f)))
-	return
+}
+
+// Add adds a raw http.HandlerFunc to a path.
+func (h *Handler) Add(pattern string, f http.HandlerFunc) {
+	h.mux.HandleFunc(pattern, f)
 }
 
 // Internal wraper for AddResource.
