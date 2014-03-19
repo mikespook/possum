@@ -13,6 +13,8 @@ const (
 	PUT    = "PUT"
 	DELETE = "DELETE"
 	PATCH  = "PATCH"
+
+	StatusNone = 0
 )
 
 // Processing function returning HTTP status code and response object witch will be marshaled to JSON.
@@ -113,10 +115,18 @@ func (h *Handler) wrap(f HandlerFunc) http.HandlerFunc {
 		if h.PostHandler != nil {
 			h.PostHandler(r, status, data)
 		}
-		if err := h.writeJson(w, status, data); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			h.err(err)
+		switch {
+			case status == StatusNone:
+			case status >= 300 && status < 400:
+				if urlStr, ok := data.(string); ok {
+					http.Redirect(w, r, urlStr, status)
+				}
+			default:
+			if err := h.writeJson(w, status, data); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
+				h.err(err)
+			}
 		}
 	}
 }
