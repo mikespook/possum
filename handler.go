@@ -116,12 +116,12 @@ func (h *Handler) wrap(f HandlerFunc) http.HandlerFunc {
 			h.PostHandler(r, status, data)
 		}
 		switch {
-			case status == StatusNone:
-			case status >= 300 && status < 400:
-				if urlStr, ok := data.(string); ok {
-					http.Redirect(w, r, urlStr, status)
-				}
-			default:
+		case status == StatusNone:
+		case status >= 300 && status < 400:
+			if urlStr, ok := data.(string); ok {
+				http.Redirect(w, r, urlStr, status)
+			}
+		default:
 			if err := h.writeJson(w, status, data); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(err.Error()))
