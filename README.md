@@ -30,7 +30,7 @@ Define a rpc function:
 
 ```go
 // foobar responses intpu params.
-func foobar(params url.Values) (status int, data interface{}) {
+func foobar(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 	return http.StatusOK, params
 }
 ```
@@ -45,11 +45,11 @@ type Foobar struct {
 	possum.NoPost
 }
 
-func (foobar *Foobar) Get(params url.Values) (status int, data interface{}) {
+func (foobar *Foobar) Get(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 	return http.StatusOK, foobar.data
 }
 
-func (foobar *Foobar) Put(params url.Values) (status int, data interface{}) {
+func (foobar *Foobar) Put(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
 	foobar.data = params.Get("data")
 	return http.StatusOK, ""
 }
@@ -91,7 +91,7 @@ h.PostHandler = func(r *http.Request, status int) {
 Bind the rpc function to a path:
 
 ```go
-h.AddRPC("/rpc/test", a)
+h.AddRPC("/rpc/test", foobar)
 ```
 
 Bind the resource to a path:
