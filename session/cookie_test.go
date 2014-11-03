@@ -35,8 +35,8 @@ func TestCookieStorage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	storage := CookieStorage(sessionKey, nil)
-	s := &Session{options: M{CookieMaxAge: 1234}}
+	storage := CookieStorage(sessionKey, M{CookieMaxAge: 1234})
+	s := &Session{}
 	if err := storage.LoadTo(r, s); err == nil {
 		t.Errorf("No-named cookie error should be presented.")
 		return
