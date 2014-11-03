@@ -1,21 +1,16 @@
 package possum
 
-import (
-	"fmt"
-)
+import "fmt"
 
-type apiErr struct {
-	status  int
-	message string
+type Error struct {
+	Status  int
+	Message string
 }
 
-func (err apiErr) Error() string {
-	return err.message
+func NewError(status int, msg string) Error {
+	return Error{status, msg}
 }
 
-func Errorf(status int, format string, a ...interface{}) apiErr {
-	return apiErr{
-		status:  status,
-		message: fmt.Sprintf(format, a...),
-	}
+func (err Error) Error() string {
+	return fmt.Sprintf("%s(%d)", err.Message, err.Status)
 }
