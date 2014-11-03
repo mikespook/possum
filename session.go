@@ -1,18 +1,11 @@
 package possum
 
-import "github.com/mikespook/golib/session"
+import "github.com/mikespook/possum/session"
 
-type Session interface {
-	Id() string
-	Set(key string, value interface{})
-	Get(key string) (value interface{})
-	Del(key string) (value interface{})
-	Init() error
-	Clean() error
-	Flush() error
-}
-
-func StartSession(ctx *Context, f session.FactoryFunc, options session.M) (err error) {
-	ctx.Session, err = f(ctx.w, ctx.Request, options)
+// StartSession initaillizes a session context.
+// This function should be called in a implementation
+// of possum.HandleFunc.
+func StartSession(ctx *Context, f session.FactoryFunc) (err error) {
+	ctx.Session, err = f(ctx.w, ctx.Request)
 	return
 }

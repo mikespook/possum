@@ -3,7 +3,7 @@ Possum
 
 [![Build Status][travis-img]][travis]
 
-Possum is a micro web-api framework for Go.
+Possum is a micro web-api library for Go.
 
 _Possum has not been officially released yet, as it is still in active development._
 
@@ -19,123 +19,63 @@ go get github.com/mikespook/possum
 Usage
 =====
 
-Possum framework supply two kinds api methods:
+Possum uses `Context` passing data, handling request and rendering response.
 
- * RPC: A function binding to a path can be called through HTTP.
- * REST: A Resource(struct) binding to a path can be called through HTTP with deferent request methods for deferent usages.
-
-The Possum's Handler implementing http.HandlerFunc interface can be set to http.ListenAndServe or http.ListenAndServeTLS.
-
-Define a rpc function:
+Create a new possum server mux :
 
 ```go
-// foobar responses intpu params.
-func foobar(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
-	return http.StatusOK, params
-}
+	mux := possum.NewServerMux()
 ```
 
-Define a resource implementing interfaces:
+Assign a customized error handler:
 
 ```go
-type Foobar struct {
-	data string
-	possum.NoDelete
-	possum.NoPatch
-	possum.NoPost
-}
-
-func (foobar *Foobar) Get(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
-	return http.StatusOK, foobar.data
-}
-
-func (foobar *Foobar) Put(w http.ResponseWriter, r *http.Request) (status int, data interface{}) {
-	foobar.data = params.Get("data")
-	return http.StatusOK, ""
-}
-```
-
-Get a new handler of possum:
-
-```go
-	h := possum.NewHandler()
-```
-
-Assign a custome error handler:
-
-```go
-h.ErrorHandler = func(err error) {
+mux.ErrorHandler = func(err error) {
 	fmt.Println(err)
 }
 ```
 
-A wrap handler is usually used for global pre-checking or custome logs:
+`PreRequest` and `PostResponse` is useful for pre-checking or customizing logs:
 
 ```go
-h.PreHandler = func(r *http.Request) (int, error) {
-	host, port, err := net.SplitHostPort(r.RemoteAddr)
+mux.PreRequest = func(ctx *Context) error {
+	host, port, err := net.SplitHostPort(ctx.Request.RemoteAddr)
 	if err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
 	if host != "127.0.0.1" {
-		return http.StatusForbidden, fmt.Errorf("Localhost only")
+		return possum.NewError(http.StatusForbidden, "Localhost only")
 	}
-	return http.StatusOK, nil
+	return nil
 }
 
-h.PostHandler = func(r *http.Request, status int) {
-	fmt.Printf("[%d] %s:%s \"%s\"", status, r.RemoteAddr, r.Method, r.URL.String())		
-}
-```
-
-Bind the rpc function to a path:
-
-```go
-h.AddRPC("/rpc/test", foobar)
-```
-
-Bind the resource to a path:
-
-```go
-if err := h.AddResource("/rest/test", &Foobar{}); err != nil {
-	fmt.Println(err)
-	return
+mux.PostResponse = func(ctx *Context) error {
+	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Status, ctx.Request.RemoteAddr, ctx.Request.Method, ctx.Request.URL.String())		
 }
 ```
 
-Listen and serve it:
+Add handlers with different views:
 
 ```go
-http.ListenAndServe(":8080", h)
-```
+f := session.NewFactory(session.CookieStorage('session-id', nil))
 
-You can add some wrap functions to a rpc directly:
-
-```go
-func checkSecret(handler possum.HandlerFunc) possum.HandlerFunc {
-	return func(params url.Values) (status int, data interface{}) {
-		if params.Get("secret") != secret {
-			return http.StatusForbidden, fmt.Errorf("Wrong secret")
-		}
-		return handler(params)
-	}
+func helloword(ctx *Context) error {
+	possum.StartSession(ctx, f)
+	return nil
 }
 
-h.AddRPC("/rpc/test", checkSecret(a))
-```
-
-Resources need `Wrap` function:
-
-```go
-wrap, err := possum.Wrap(checkSecret, &Foobar{})
+mux.HandlerFunc("/json", helloword, JsonView{})
+view, err := NewHtmlView("helloword.html")
 if err != nil {
-	fmt.Println(err)
-	return
+	panic(err)
 }
-if err := handler.AddResource("/rest/user", wrap); err != nil {
-	fmt.Println(err)
-	return
-}
+mux.HandlerFunc("/html", helloword, view)
+```
+
+And finally, listen and serve:
+
+```go
+http.ListenAndServe(":8080", mux)
 ```
 
 Contributors

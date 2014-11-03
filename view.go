@@ -6,10 +6,12 @@ import (
 	"text/template"
 )
 
+// An interface to render response to display.
 type View interface {
 	Render(interface{}) ([]byte, error)
 }
 
+// JsonView renders response data to JSON format.
 type JsonView struct{}
 
 func (view JsonView) Render(data interface{}) ([]byte, error) {
@@ -20,6 +22,7 @@ type htmlView struct {
 	template.Template
 }
 
+// This view renders a template into HTML.
 func NewHtmlView(filename ...string) (*htmlView, error) {
 	t, err := template.ParseFiles(filename...)
 	if err != nil {

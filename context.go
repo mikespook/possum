@@ -1,13 +1,17 @@
 package possum
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/mikespook/possum/session"
+)
 
 type Context struct {
 	w       http.ResponseWriter
 	Request *http.Request
 	Data    interface{}
 	Status  int
-	Session Session
+	Session *session.Session
 }
 
 func (ctx *Context) Header() http.Header {
@@ -31,6 +35,7 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context {
 	ctx := &Context{
 		w:       w,
 		Request: r,
+		Status:  http.StatusOK,
 	}
 	return ctx
 }

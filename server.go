@@ -3,7 +3,7 @@ package possum
 
 import "net/http"
 
-// The HandlerFunc type is an adapter to allow the use of ordinary
+// HandlerFunc type is an adapter to allow the use of ordinary
 // functions as a HTTP handlers.
 type HandlerFunc func(ctx *Context) error
 
@@ -27,6 +27,8 @@ func (mux *ServeMux) err(err error) {
 	}
 }
 
+// HandleFunc specifies a pair of handler and view to handle
+// the request witch match pattern.
 func (mux *ServeMux) HandleFunc(pattern string, handler HandlerFunc, view View) {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		ctx := newContext(w, r)
@@ -59,6 +61,7 @@ func (mux *ServeMux) HandleFunc(pattern string, handler HandlerFunc, view View) 
 	mux.ServeMux.HandleFunc(pattern, f)
 }
 
+// handleError tests the context `Error` and assign it to response.
 func (mux *ServeMux) handleError(ctx *Context, err error) bool {
 	if err == nil {
 		return false
