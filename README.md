@@ -50,7 +50,8 @@ mux.PreRequest = func(ctx *Context) error {
 }
 
 mux.PostResponse = func(ctx *Context) error {
-	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Status, ctx.Request.RemoteAddr, ctx.Request.Method, ctx.Request.URL.String())		
+	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Status, ctx.Request.RemoteAddr,
+		ctx.Request.Method, ctx.Request.URL.String())		
 }
 ```
 
@@ -60,7 +61,7 @@ Add handlers with different views:
 f := session.NewFactory(session.CookieStorage('session-id', nil))
 
 func helloword(ctx *Context) error {
-	possum.StartSession(ctx, f)
+	ctx.StartSession(f)
 	return nil
 }
 
