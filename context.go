@@ -1,6 +1,7 @@
 package possum
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/mikespook/possum/session"
@@ -22,6 +23,15 @@ func (ctx *Context) flush(view View) error {
 	if ctx.Session != nil {
 		ctx.Session.Flush()
 	}
+	cType := view.ContentType()
+	if cType == "" {
+		cType = "text/plain"
+	}
+	charSet := view.CharSet()
+	if charSet == "" {
+		charSet = "utf-8"
+	}
+	ctx.Header().Set("Content-Type", fmt.Sprintf("%s; charset=%s", cType, charSet))
 	ctx.w.WriteHeader(ctx.Status)
 	data, err := view.Render(ctx.Data)
 	if err != nil {
