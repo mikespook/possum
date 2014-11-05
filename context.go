@@ -32,10 +32,10 @@ func (ctx *Context) flush(view View) error {
 		cType = "text/plain"
 	}
 	charSet := view.CharSet()
-	if charSet == "" {
-		charSet = "utf-8"
+	if charSet != "" {
+		charSet = fmt.Sprintf("; charset=%s", charSet)
 	}
-	ctx.Header().Set("Content-Type", fmt.Sprintf("%s; charset=%s", cType, charSet))
+	ctx.Header().Set("Content-Type", fmt.Sprintf("%s%s", cType, charSet))
 	ctx.w.WriteHeader(ctx.Response.Status)
 	data, err := view.Render(ctx.Response.Data)
 	if err != nil {

@@ -54,8 +54,10 @@ func (mux *ServeMux) HandleFunc(pattern string, handler HandlerFunc, view View) 
 				return
 			}
 		}
-		if err := handler(ctx); mux.handleError(ctx, err) {
-			return
+		if handler != nil {
+			if err := handler(ctx); mux.handleError(ctx, err) {
+				return
+			}
 		}
 	}
 	mux.ServeMux.HandleFunc(pattern, f)
@@ -67,12 +69,12 @@ func (mux *ServeMux) handleError(ctx *Context, err error) bool {
 		return false
 	}
 	if e, ok := err.(Error); ok {
-		ctx.Status = e.Status
-		ctx.Data = e
+		ctx.Response.Status = e.Status
+		ctx.Response.Data = e
 		return false
 	}
-	ctx.Status = http.StatusInternalServerError
-	ctx.Data = err
+	ctx.Response.Status = http.StatusInternalServerError
+	ctx.Response.Data = err
 	mux.err(err)
 	return true
 }

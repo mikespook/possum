@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 
 	html "html/template"
 	text "text/template"
@@ -77,4 +78,25 @@ func (view TempView) ContentType() string {
 
 func (view TempView) CharSet() string {
 	return view.charSet
+}
+
+func NewFileView(filename string, cType string) FileView {
+	return FileView{filename, cType}
+}
+
+type FileView struct {
+	filename    string
+	contentType string
+}
+
+func (view FileView) Render(data interface{}) (output []byte, err error) {
+	return ioutil.ReadFile(view.filename)
+}
+
+func (view FileView) ContentType() string {
+	return view.contentType
+}
+
+func (view FileView) CharSet() string {
+	return ""
 }
