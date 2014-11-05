@@ -65,12 +65,17 @@ func helloword(ctx *Context) error {
 	return nil
 }
 
-mux.HandlerFunc("/json", helloword, JsonView{})
-view, err := NewHtmlView("helloword.html")
-if err != nil {
-	panic(err)
-}
-mux.HandlerFunc("/html", helloword, view)
+mux.HandlerFunc("/json", helloword, possum.JsonView{})
+htmlTemps := possum.NewHtmlTemplates("*.html")
+mux.HandleFunc("/html", helloworld, possum.NewHtmlView(htmlTemps, "base.html"))
+textTemps := possum.NewTextTemplates("*.html")
+mux.HandleFunc("/text", helloworld, possum.NewTextView(textTemps, "base.html"))
+```
+
+Also, PProf can be initialized by `mux.InitPProf`:
+
+```go
+mux.InitPProf("/_pprof")
 ```
 
 And finally, listen and serve:
