@@ -18,7 +18,7 @@ func main() {
 	textTemps := possum.NewTextTemplates("*.html")
 	mux.HandleFunc("/text", helloworld, possum.NewTextView(textTemps, "base.html"))
 	log.Debug(addr)
-	mux.InitPProf()
+	mux.InitPProf("/_pprof")
 	http.ListenAndServe(addr, mux)
 }
 

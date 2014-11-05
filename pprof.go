@@ -1,13 +1,17 @@
 package possum
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/pprof"
 )
 
-func (mux *ServeMux) InitPProf() {
-	mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
-	mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
-	mux.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-	mux.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+func (mux *ServeMux) InitPProf(prefix string) {
+	if prefix == "" {
+		prefix = "/debug/pprof"
+	}
+	mux.Handle(fmt.Sprintf("%s/", prefix), http.HandlerFunc(pprof.Index))
+	mux.Handle(fmt.Sprintf("%s/cmdline", prefix), http.HandlerFunc(pprof.Cmdline))
+	mux.Handle(fmt.Sprintf("%s/profile", prefix), http.HandlerFunc(pprof.Profile))
+	mux.Handle(fmt.Sprintf("%s/symbol", prefix), http.HandlerFunc(pprof.Symbol))
 }
