@@ -41,7 +41,6 @@ profiles:<br>
 `
 
 func pprofIndex(prefix string) http.HandlerFunc {
-
 	var indexTmpl = template.Must(template.New("index").Parse(fmt.Sprintf(pprofTemp, prefix)))
 	if prefix[len(prefix)-1] != '/' {
 		prefix = fmt.Sprintf("%s/", prefix)
