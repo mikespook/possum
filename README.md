@@ -50,7 +50,7 @@ mux.PreRequest = func(ctx *Context) error {
 }
 
 mux.PostResponse = func(ctx *Context) error {
-	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Status, ctx.Request.RemoteAddr,
+	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Response.Status, ctx.Request.RemoteAddr,
 		ctx.Request.Method, ctx.Request.URL.String())		
 }
 ```
