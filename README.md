@@ -3,7 +3,7 @@ Possum
 
 [![Build Status][travis-img]][travis]
 
-Possum is a micro web-api library for Go.
+Possum is a micro web library for Go.
 
 _Possum has not been officially released yet, as it is still in active development._
 
