@@ -17,14 +17,20 @@ func main() {
 	mux.HandleFunc("/html", helloworld, possum.NewHtmlView(htmlTemps, "base.html"))
 	textTemps := possum.NewTextTemplates("*.html")
 	mux.HandleFunc("/text", helloworld, possum.NewTextView(textTemps, "base.html"))
+	mux.HandleFunc("/project.css", nil, possum.NewFileView("project.css", "text/css"))
+	mux.HandleFunc("/img.jpg", nil, possum.NewFileView("img.jpg", "image/jpeg"))
 	log.Debug(addr)
 	mux.InitPProf("/_pprof")
 	http.ListenAndServe(addr, mux)
 }
 
+func css(ctx *possum.Context) error {
+	return nil
+}
+
 func helloworld(ctx *possum.Context) error {
-	ctx.Status = http.StatusCreated
-	ctx.Data = map[string]interface{}{
+	ctx.Response.Status = http.StatusCreated
+	ctx.Response.Data = map[string]interface{}{
 		"content": map[string]string{
 			"msg":    "hello",
 			"target": "world",
