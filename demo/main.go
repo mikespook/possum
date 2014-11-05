@@ -11,23 +11,14 @@ const addr = "127.0.0.1:12345"
 
 func main() {
 	mux := possum.NewServerMux()
-
 	mux.HandleFunc("/json", helloworld, possum.JsonView{})
 
-	htmlView, err := possum.NewHtmlView("base.html", "content.html")
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	mux.HandleFunc("/html", helloworld, htmlView)
-
-	textView, err := possum.NewTextView("base.html", "content.html")
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	mux.HandleFunc("/text", helloworld, textView)
+	htmlTemps := possum.NewHtmlTemplates("*.html")
+	mux.HandleFunc("/html", helloworld, possum.NewHtmlView(htmlTemps, "base.html"))
+	textTemps := possum.NewTextTemplates("*.html")
+	mux.HandleFunc("/text", helloworld, possum.NewTextView(textTemps, "base.html"))
 	log.Debug(addr)
+	mux.InitPProf()
 	http.ListenAndServe(addr, mux)
 }
 

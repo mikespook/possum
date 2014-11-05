@@ -3,6 +3,7 @@ package possum
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 
 	html "html/template"
 	text "text/template"
@@ -30,62 +31,50 @@ func (view JsonView) CharSet() string {
 	return "utf-8"
 }
 
-type htmlView struct {
-	html.Template
+type Template interface {
+	ExecuteTemplate(wr io.Writer, name string, data interface{}) error
 }
 
-// This view renders a template into HTML.
-func NewHtmlView(filename ...string) (*htmlView, error) {
-	t, err := html.ParseFiles(filename...)
-	if err != nil {
-		return nil, err
-	}
-	return &htmlView{*t}, nil
+func NewHtmlTemplates(pattern string) *html.Template {
+	return html.Must(html.ParseGlob(pattern))
 }
 
-func (view *htmlView) Render(data interface{}) (output []byte, err error) {
+func NewTextTemplates(pattern string) *text.Template {
+	return text.Must(text.ParseGlob(pattern))
+}
+
+func NewTempView(temp Template, name, cType, charSet string) TempView {
+	return TempView{temp, name, cType, charSet}
+}
+
+func NewHtmlView(temp Template, name string) TempView {
+	return TempView{temp, name, "text/html", "utf-8"}
+}
+
+func NewTextView(temp Template, name string) TempView {
+	return TempView{temp, name, "text/plain", "utf-8"}
+}
+
+type TempView struct {
+	Template
+	name        string
+	contentType string
+	charSet     string
+}
+
+func (view TempView) Render(data interface{}) (output []byte, err error) {
 	var buf bytes.Buffer
-	if err = view.Execute(&buf, data); err != nil {
+	if err = view.ExecuteTemplate(&buf, view.name, data); err != nil {
 		return
 	}
 	output = buf.Bytes()
 	return
 }
 
-func (view *htmlView) ContentType() string {
-	return "text/html"
+func (view TempView) ContentType() string {
+	return view.contentType
 }
 
-func (view *htmlView) CharSet() string {
-	return "utf-8"
-}
-
-type textView struct {
-	text.Template
-}
-
-// This view renders a template into HTML.
-func NewTextView(filename ...string) (*textView, error) {
-	t, err := text.ParseFiles(filename...)
-	if err != nil {
-		return nil, err
-	}
-	return &textView{*t}, nil
-}
-
-func (view *textView) Render(data interface{}) (output []byte, err error) {
-	var buf bytes.Buffer
-	if err = view.Execute(&buf, data); err != nil {
-		return
-	}
-	output = buf.Bytes()
-	return
-}
-
-func (view *textView) ContentType() string {
-	return "text/plain"
-}
-
-func (view *textView) CharSet() string {
-	return "utf-8"
+func (view TempView) CharSet() string {
+	return view.charSet
 }
