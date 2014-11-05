@@ -7,12 +7,16 @@ import (
 	"github.com/mikespook/possum/session"
 )
 
+type Response struct {
+	Status int
+	Data   interface{}
+}
+
 type Context struct {
-	w       http.ResponseWriter
-	Request *http.Request
-	Data    interface{}
-	Status  int
-	Session *session.Session
+	w        http.ResponseWriter
+	Request  *http.Request
+	Response Response
+	Session  *session.Session
 }
 
 func (ctx *Context) Header() http.Header {
@@ -32,8 +36,8 @@ func (ctx *Context) flush(view View) error {
 		charSet = "utf-8"
 	}
 	ctx.Header().Set("Content-Type", fmt.Sprintf("%s; charset=%s", cType, charSet))
-	ctx.w.WriteHeader(ctx.Status)
-	data, err := view.Render(ctx.Data)
+	ctx.w.WriteHeader(ctx.Response.Status)
+	data, err := view.Render(ctx.Response.Data)
 	if err != nil {
 		return err
 	}
@@ -45,7 +49,9 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context {
 	ctx := &Context{
 		w:       w,
 		Request: r,
-		Status:  http.StatusOK,
+		Response: Response{
+			Status: http.StatusOK,
+		},
 	}
 	return ctx
 }
