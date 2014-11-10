@@ -70,6 +70,7 @@ htmlTemps := possum.NewHtmlTemplates("*.html")
 mux.HandleFunc("/html", helloworld, possum.NewHtmlView(htmlTemps, "base.html"))
 textTemps := possum.NewTextTemplates("*.html")
 mux.HandleFunc("/text", helloworld, possum.NewTextView(textTemps, "base.html"))
+mux.HandleFunc("/project.css", nil, possum.NewFileView("project.css", "text/css"))
 ```
 
 Also, PProf can be initialized by `mux.InitPProf`:

@@ -1,7 +1,10 @@
 // Possum is a micro web library for Go.
 package possum
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 // HandlerFunc type is an adapter to allow the use of ordinary
 // functions as a HTTP handlers.
@@ -35,7 +38,11 @@ func (mux *ServeMux) HandleFunc(pattern string, handler HandlerFunc, view View) 
 
 		defer func() {
 			if err := recover(); err != nil {
-				mux.err(err.(error))
+				if e, ok := err.(error); ok {
+					mux.err(e)
+				} else {
+					mux.err(fmt.Errorf("%s", err))
+				}
 				return
 			}
 			if err := ctx.flush(view); err != nil {
