@@ -3,3 +3,4 @@ pprof: /_pprof
 log: 
     file:
     level: all
+test: true

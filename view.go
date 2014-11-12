@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"path/filepath"
+	"sync"
 
 	html "html/template"
 	text "text/template"
+
+	"gopkg.in/fsnotify.v1"
 )
 
 // An interface to render response to display.
@@ -36,34 +40,92 @@ type Template interface {
 	ExecuteTemplate(wr io.Writer, name string, data interface{}) error
 }
 
-func NewHtmlTemplates(pattern string) *html.Template {
-	return html.Must(html.ParseGlob(pattern))
+type tmpTemplate struct {
+	sync.Mutex
+	t Template
 }
 
-func NewTextTemplates(pattern string) *text.Template {
-	return text.Must(text.ParseGlob(pattern))
+func (tmp *tmpTemplate) ExecuteTemplate(wr io.Writer, name string, data interface{}) error {
+	return tmp.t.ExecuteTemplate(wr, name, data)
 }
 
-func NewTempView(temp Template, name, cType, charSet string) TempView {
-	return TempView{temp, name, cType, charSet}
+var (
+	htmlTemp    tmpTemplate
+	textTemp    tmpTemplate
+	viewWatcher *fsnotify.Watcher
+)
+
+func InitHtmlTemplates(pattern string) (err error) {
+	defer htmlTemp.Unlock()
+	htmlTemp.Lock()
+	htmlTemp.t, err = html.ParseGlob(pattern)
+	return
 }
 
-func NewHtmlView(temp Template, name string) TempView {
-	return TempView{temp, name, "text/html", "utf-8"}
+func InitTextTemplates(pattern string) (err error) {
+	defer textTemp.Unlock()
+	textTemp.Lock()
+	textTemp.t, err = text.ParseGlob(pattern)
+	return nil
 }
 
-func NewTextView(temp Template, name string) TempView {
-	return TempView{temp, name, "text/plain", "utf-8"}
+func NewHtmlView(name, charSet string) TemplateView {
+	return TemplateView{&htmlTemp, name, "text/html", charSet}
 }
 
-type TempView struct {
-	Template
+func NewTextView(name, charSet string) TemplateView {
+	return TemplateView{&textTemp, name, "text/plain", charSet}
+}
+
+func InitViewWatcher(pattern string, f func(string) error, ef func(error)) (err error) {
+	if err = f(pattern); err != nil {
+		return
+	}
+	if viewWatcher == nil {
+		viewWatcher, err = fsnotify.NewWatcher()
+		if err != nil {
+			return
+		}
+		go func() {
+			for {
+				select {
+				case <-viewWatcher.Events:
+					if err := f(pattern); err != nil {
+						ef(err)
+					}
+				case err := <-viewWatcher.Errors:
+					if ef != nil {
+						ef(err)
+					}
+				}
+			}
+		}()
+	}
+	var matches []string
+	matches, err = filepath.Glob(pattern)
+	if err != nil {
+		return
+	}
+	for _, v := range matches {
+		if err = viewWatcher.Add(v); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func CloseViewWatcher() error {
+	return viewWatcher.Close()
+}
+
+type TemplateView struct {
+	*tmpTemplate
 	name        string
 	contentType string
 	charSet     string
 }
 
-func (view TempView) Render(data interface{}) (output []byte, err error) {
+func (view TemplateView) Render(data interface{}) (output []byte, err error) {
 	var buf bytes.Buffer
 	if err = view.ExecuteTemplate(&buf, view.name, data); err != nil {
 		return
@@ -72,11 +134,11 @@ func (view TempView) Render(data interface{}) (output []byte, err error) {
 	return
 }
 
-func (view TempView) ContentType() string {
+func (view TemplateView) ContentType() string {
 	return view.contentType
 }
 
-func (view TempView) CharSet() string {
+func (view TemplateView) CharSet() string {
 	return view.charSet
 }
 
