@@ -110,4 +110,3 @@ See LICENSE.
  [travis]: https://travis-ci.org/mikespook/possum
  [blog]: http://mikespook.com
  [twitter]: http://twitter.com/mikespook
- [demo]: https://github.com/mikespook/possum/blob/master/demo/main.go
