@@ -66,10 +66,18 @@ func helloword(ctx *Context) error {
 }
 
 mux.HandlerFunc("/json", helloword, possum.JsonView{})
-htmlTemps := possum.NewHtmlTemplates("*.html")
-mux.HandleFunc("/html", helloworld, possum.NewHtmlView(htmlTemps, "base.html"))
-textTemps := possum.NewTextTemplates("*.html")
-mux.HandleFunc("/text", helloworld, possum.NewTextView(textTemps, "base.html"))
+
+if err := possum.InitHtmlTemplates("*.html"); err != nil {
+	return
+}
+mux.HandleFunc("/html", helloworld, possum.NewHtmlView("base.html", "utf-8"))
+
+if err := possum.InitViewWatcher("*.html", possum.InitTextTemplates, nil); err != nil {
+	return
+}
+mux.HandleFunc("/html", helloworld, possum.NewTextView("base.html", "utf-8"))
+
+mux.HandleFunc("/img.jpg", nil, possum.NewFileView("img.jpg", "image/jpeg"))
 ```
 
 Also, PProf can be initialized by `mux.InitPProf`:
@@ -83,6 +91,8 @@ And finally, listen and serve:
 ```go
 http.ListenAndServe(":8080", mux)
 ```
+
+For more details, see [Demo][demo].
 
 Contributors
 ============
@@ -100,3 +110,4 @@ See LICENSE.
  [travis]: https://travis-ci.org/mikespook/possum
  [blog]: http://mikespook.com
  [twitter]: http://twitter.com/mikespook
+ [demo]: https://github.com/mikespook/possum/blob/master/demo/main.go
