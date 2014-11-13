@@ -51,8 +51,9 @@ mux.PreRequest = func(ctx *Context) error {
 }
 
 mux.PostResponse = func(ctx *Context) error {
-	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Response.Status, ctx.Request.RemoteAddr,
-		ctx.Request.Method, ctx.Request.URL.String())		
+	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Response.Status,
+		ctx.Request.RemoteAddr,	ctx.Request.Method,
+		ctx.Request.URL.String())		
 }
 ```
 
@@ -73,7 +74,8 @@ if err := possum.InitHtmlTemplates("*.html"); err != nil {
 }
 mux.HandleFunc("/html", helloworld, possum.NewHtmlView("base.html", "utf-8"))
 
-if err := possum.InitViewWatcher("*.html", possum.InitTextTemplates, nil); err != nil {
+if err := possum.InitViewWatcher("*.html", possum.InitTextTemplates, nil);
+	err != nil {
 	return
 }
 mux.HandleFunc("/html", helloworld, possum.NewTextView("base.html", "utf-8"))
@@ -93,7 +95,7 @@ And finally, listen and serve:
 http.ListenAndServe(":8080", mux)
 ```
 
-For more details, see [Demo][demo].
+For more details, please see the [demo][demo].
 
 Contributors
 ============
@@ -113,3 +115,4 @@ See LICENSE.
  [twitter]: http://twitter.com/mikespook
  [godoc-img]: https://godoc.org/github.com/mikespook/gorbac?status.png
  [godoc]: https://godoc.org/github.com/mikespook/possum
+ [demo]: https://github.com/mikespook/possum/tree/master/demo
