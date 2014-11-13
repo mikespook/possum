@@ -2,6 +2,7 @@ Possum
 ======
 
 [![Build Status][travis-img]][travis]
+[![GoDoc](godoc-img)](godoc)
 
 Possum is a micro web library for Go.
 
@@ -24,7 +25,7 @@ Possum uses `Context` passing data, handling request and rendering response.
 Create a new possum server mux :
 
 ```go
-	mux := possum.NewServerMux()
+mux := possum.NewServerMux()
 ```
 
 Assign a customized error handler:
@@ -110,3 +111,5 @@ See LICENSE.
  [travis]: https://travis-ci.org/mikespook/possum
  [blog]: http://mikespook.com
  [twitter]: http://twitter.com/mikespook
+ [godoc-img]: https://godoc.org/github.com/mikespook/gorbac?status.png
+ [godoc]: https://godoc.org/github.com/mikespook/gorbac
