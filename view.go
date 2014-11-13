@@ -128,7 +128,7 @@ func InitViewWatcher(pattern string, f func(string) error, ef func(error)) (err 
 	if err != nil {
 		return
 	}
-	for _, v := range m.Uatches {
+	for _, v := range matches {
 		if err = viewWatcher.Add(v); err != nil {
 			return
 		}

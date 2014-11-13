@@ -40,7 +40,7 @@ func (ctx *Context) flush(view View) error {
 	if charSet != "" {
 		charSet = fmt.Sprintf("; charset=%s", charSet)
 	}
-	ctx.Response.Header().Set("Content-Type", fmt.Sprintf("%s%s", cType, charSet))
+	ctx.Response.w.Header().Set("Content-Type", fmt.Sprintf("%s%s", cType, charSet))
 	ctx.Response.w.WriteHeader(ctx.Response.Status)
 	data, err := view.Render(ctx.Response.Data)
 	if err != nil {

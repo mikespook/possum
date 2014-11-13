@@ -108,5 +108,6 @@ func helloworld(ctx *possum.Context) error {
 			"target": "world",
 		},
 	}
+	ctx.Response.Header().Set("Test", "Hello world")
 	return nil
 }
