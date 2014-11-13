@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 
 	html "html/template"
 	text "text/template"
@@ -14,7 +15,7 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
-// An interface to render response to display.
+// View is an interface to render response with a specific format.
 type View interface {
 	Render(interface{}) ([]byte, error)
 	ContentType() string
@@ -36,6 +37,8 @@ func (view JsonView) CharSet() string {
 	return "utf-8"
 }
 
+// Template is an interface to render template `name` with data,
+// and output to wr.
 type Template interface {
 	ExecuteTemplate(wr io.Writer, name string, data interface{}) error
 }
@@ -52,9 +55,15 @@ func (tmp *tmpTemplate) ExecuteTemplate(wr io.Writer, name string, data interfac
 var (
 	htmlTemp    tmpTemplate
 	textTemp    tmpTemplate
-	viewWatcher *fsnotify.Watcher
+	viewWatcher struct {
+		*fsnotify.Watcher
+		closer chan bool
+		count  uint32
+	}
 )
 
+// InitHtmlTemplates initialzes a series of HTML templates
+// in the directory `pattern`.
 func InitHtmlTemplates(pattern string) (err error) {
 	defer htmlTemp.Unlock()
 	htmlTemp.Lock()
@@ -62,6 +71,8 @@ func InitHtmlTemplates(pattern string) (err error) {
 	return
 }
 
+// InitTextTemplates initialzes a series of plain text templates
+// in the directory `pattern`.
 func InitTextTemplates(pattern string) (err error) {
 	defer textTemp.Unlock()
 	textTemp.Lock()
@@ -69,44 +80,55 @@ func InitTextTemplates(pattern string) (err error) {
 	return nil
 }
 
+// NewHtmlView retruns a TemplateView witch uses HTML templates internally.
 func NewHtmlView(name, charSet string) TemplateView {
 	return TemplateView{&htmlTemp, name, "text/html", charSet}
 }
 
+// NewTextView retruns a TemplateView witch uses text templates internally.
 func NewTextView(name, charSet string) TemplateView {
 	return TemplateView{&textTemp, name, "text/plain", charSet}
 }
 
+// InitViewWatcher initialzes a watcher to watch templates changes in the `pattern`.
+// f would be InitHtmlTemplates or InitTextTemplates.
+// If the watcher raises an error internally, the callback function ef will be executed.
+// ef can be nil witch represents ignoring all internal errors.
 func InitViewWatcher(pattern string, f func(string) error, ef func(error)) (err error) {
 	if err = f(pattern); err != nil {
 		return
 	}
-	if viewWatcher == nil {
-		viewWatcher, err = fsnotify.NewWatcher()
+	if viewWatcher.Watcher == nil {
+		viewWatcher.Watcher, err = fsnotify.NewWatcher()
 		if err != nil {
 			return
 		}
-		go func() {
-			for {
-				select {
-				case <-viewWatcher.Events:
-					if err := f(pattern); err != nil {
-						ef(err)
-					}
-				case err := <-viewWatcher.Errors:
-					if ef != nil {
-						ef(err)
-					}
-				}
-			}
-		}()
+		viewWatcher.closer = make(chan bool)
 	}
+	go func() {
+		atomic.AddUint32(&viewWatcher.count, 1)
+		for {
+			select {
+			case <-viewWatcher.Events:
+				if err := f(pattern); err != nil {
+					ef(err)
+				}
+			case err := <-viewWatcher.Errors:
+				if ef != nil {
+					ef(err)
+				}
+			case <-viewWatcher.closer:
+				break
+			}
+		}
+	}()
+
 	var matches []string
 	matches, err = filepath.Glob(pattern)
 	if err != nil {
 		return
 	}
-	for _, v := range matches {
+	for _, v := range m.Uatches {
 		if err = viewWatcher.Add(v); err != nil {
 			return
 		}
@@ -114,10 +136,15 @@ func InitViewWatcher(pattern string, f func(string) error, ef func(error)) (err 
 	return
 }
 
+// CloseViewWatcher closes the wathcer.
 func CloseViewWatcher() error {
+	for i := uint32(0); i < viewWatcher.count; i++ {
+		viewWatcher.closer <- true
+	}
 	return viewWatcher.Close()
 }
 
+// TemplateView represents `html/template` and `text/template` view.
 type TemplateView struct {
 	*tmpTemplate
 	name        string
@@ -142,23 +169,25 @@ func (view TemplateView) CharSet() string {
 	return view.charSet
 }
 
-func NewFileView(filename string, cType string) FileView {
-	return FileView{filename, cType}
+// NewStaticFileView returns an new StaticFileView for serving static files.
+func NewStaticFileView(filename string, cType string) StaticFileView {
+	return StaticFileView{filename, cType}
 }
 
-type FileView struct {
+// StaticFileView reads and responses static files.
+type StaticFileView struct {
 	filename    string
 	contentType string
 }
 
-func (view FileView) Render(data interface{}) (output []byte, err error) {
+func (view StaticFileView) Render(data interface{}) (output []byte, err error) {
 	return ioutil.ReadFile(view.filename)
 }
 
-func (view FileView) ContentType() string {
+func (view StaticFileView) ContentType() string {
 	return view.contentType
 }
 
-func (view FileView) CharSet() string {
+func (view StaticFileView) CharSet() string {
 	return ""
 }

@@ -79,8 +79,8 @@ func main() {
 	mux.HandleFunc("/json", helloworld, possum.JsonView{})
 	mux.HandleFunc("/html", helloworld, possum.NewHtmlView("base.html", "utf-8"))
 	mux.HandleFunc("/text", helloworld, possum.NewTextView("base.html", "utf-8"))
-	mux.HandleFunc("/project.css", nil, possum.NewFileView("project.css", "text/css"))
-	mux.HandleFunc("/img.jpg", nil, possum.NewFileView("img.jpg", "image/jpeg"))
+	mux.HandleFunc("/project.css", nil, possum.NewStaticFileView("project.css", "text/css"))
+	mux.HandleFunc("/img.jpg", nil, possum.NewStaticFileView("img.jpg", "image/jpeg"))
 
 	if config.PProf != "" {
 		log.Messagef("PProf: http://%s%s", config.Addr, config.PProf)
