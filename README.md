@@ -112,4 +112,4 @@ See LICENSE.
  [blog]: http://mikespook.com
  [twitter]: http://twitter.com/mikespook
  [godoc-img]: https://godoc.org/github.com/mikespook/gorbac?status.png
- [godoc]: https://godoc.org/github.com/mikespook/gorbac
+ [godoc]: https://godoc.org/github.com/mikespook/possum
