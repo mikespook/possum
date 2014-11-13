@@ -2,7 +2,7 @@ Possum
 ======
 
 [![Build Status][travis-img]][travis]
-[![GoDoc](godoc-img)](godoc)
+[![GoDoc][godoc-img]][godoc]
 
 Possum is a micro web library for Go.
 
