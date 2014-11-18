@@ -26,11 +26,20 @@ type Context struct {
 	Request  *http.Request
 	Response Response
 	Session  *session.Session
+	redirect bool
+}
+
+func (ctx *Context) Redirect(url string, code int) {
+	ctx.redirect = true
+	http.Redirect(ctx.Response.w, ctx.Request, url, code)
 }
 
 func (ctx *Context) flush(view View) error {
 	if ctx.Session != nil {
 		ctx.Session.Flush()
+	}
+	if ctx.redirect {
+		return nil
 	}
 	cType := view.ContentType()
 	if cType == "" {
