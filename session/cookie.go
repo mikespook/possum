@@ -120,18 +120,19 @@ func (storage *cookieStorage) LoadTo(r *http.Request, s *Session) error {
 	s.storage = storage
 	cookie, err := r.Cookie(storage.keyName)
 	if err != nil {
-		s.Init()
 		return err
 	}
 	s.id = cookie.Value
 	cookie, err = r.Cookie(cookie.Value)
 	if err != nil {
-		s.Init()
 		return err
 	}
-	if err := decoding([]byte(s.id), cookie.Value, &s.data); err != nil {
+	err = decoding([]byte(s.id), cookie.Value, &s.data)
+	if err != nil {
+		if err != errValueTooShort {
+			return err
+		}
 		s.data = make(M)
-		return err
 	}
 	return nil
 }

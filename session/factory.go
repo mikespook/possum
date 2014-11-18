@@ -12,7 +12,12 @@ func NewFactory(storage Storage) FactoryFunc {
 			storage: storage,
 			w:       w,
 		}
-		err = storage.LoadTo(r, s)
-		return
+		if err = s.Init(); err != nil {
+			return
+		}
+		if err = storage.LoadTo(r, s); err != http.ErrNoCookie {
+			return
+		}
+		return s, nil
 	}
 }

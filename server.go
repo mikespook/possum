@@ -81,7 +81,7 @@ func (mux *ServeMux) handleError(ctx *Context, err error) bool {
 		return false
 	}
 	ctx.Response.Status = http.StatusInternalServerError
-	ctx.Response.Data = err
+	ctx.Response.Data = err.Error()
 	mux.err(err)
 	return true
 }

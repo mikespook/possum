@@ -39,7 +39,7 @@ func GetKey() []byte {
 }
 
 var errKeyTooShort = errors.New("The key is too short")
-var errValueTooShort = errors.New("The block is too short")
+var errValueTooShort = errors.New("The value is too short")
 
 func encrypt(key, value []byte) ([]byte, error) {
 	if len(key) < aesKeySize-keySize {

@@ -25,7 +25,9 @@ func (ctx *Context) Header() http.Header {
 
 func (ctx *Context) flush(view View) error {
 	if ctx.Session != nil {
-		ctx.Session.Flush()
+		if err := ctx.Session.Flush(); err != nil {
+			return err
+		}
 	}
 	cType := view.ContentType()
 	if cType == "" {
