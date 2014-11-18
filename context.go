@@ -7,7 +7,8 @@ import (
 	"github.com/mikespook/possum/session"
 )
 
-// A Response represents an HTTP response status and data to be send to client.
+// A Response represents an HTTP response status
+// and data to be send to client.
 type Response struct {
 	Status int
 	Data   interface{}
@@ -26,20 +27,27 @@ type Context struct {
 	Request  *http.Request
 	Response Response
 	Session  *session.Session
-	redirect bool
 }
 
-func (ctx *Context) Redirect(url string, code int) {
-	ctx.redirect = true
-	http.Redirect(ctx.Response.w, ctx.Request, url, code)
+func (ctx *Context) Redirect(code int, url string) {
+	ctx.Response.Status = code
+	ctx.Response.Data = url
 }
 
 func (ctx *Context) flush(view View) error {
 	if ctx.Session != nil {
 		ctx.Session.Flush()
 	}
-	if ctx.redirect {
-		return nil
+	if ctx.Response.Status == http.StatusMovedPermanently ||
+		ctx.Response.Status == http.StatusFound ||
+		ctx.Response.Status == http.StatusSeeOther ||
+		ctx.Response.Status == http.StatusTemporaryRedirect {
+		if url, ok := ctx.Response.Data.(string); ok {
+			http.Redirect(ctx.Response.w, ctx.Request, url, ctx.Response.Status)
+			return nil
+		}
+		return NewError(http.StatusInternalServerError,
+			fmt.Sprintf("%T is not an URL.", ctx.Response.Data))
 	}
 	cType := view.ContentType()
 	if cType == "" {
@@ -49,7 +57,8 @@ func (ctx *Context) flush(view View) error {
 	if charSet != "" {
 		charSet = fmt.Sprintf("; charset=%s", charSet)
 	}
-	ctx.Response.w.Header().Set("Content-Type", fmt.Sprintf("%s%s", cType, charSet))
+	ctx.Response.w.Header().Set("Content-Type",
+		fmt.Sprintf("%s%s", cType, charSet))
 	ctx.Response.w.WriteHeader(ctx.Response.Status)
 	data, err := view.Render(ctx.Response.Data)
 	if err != nil {
