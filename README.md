@@ -2,6 +2,7 @@ Possum
 ======
 
 [![Build Status][travis-img]][travis]
+[![GoDoc][godoc-img]][godoc]
 
 Possum is a micro web library for Go.
 
@@ -24,7 +25,7 @@ Possum uses `Context` passing data, handling request and rendering response.
 Create a new possum server mux :
 
 ```go
-	mux := possum.NewServerMux()
+mux := possum.NewServerMux()
 ```
 
 Assign a customized error handler:
@@ -50,8 +51,9 @@ mux.PreRequest = func(ctx *Context) error {
 }
 
 mux.PostResponse = func(ctx *Context) error {
-	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Response.Status, ctx.Request.RemoteAddr,
-		ctx.Request.Method, ctx.Request.URL.String())		
+	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Response.Status,
+		ctx.Request.RemoteAddr,	ctx.Request.Method,
+		ctx.Request.URL.String())		
 }
 ```
 
@@ -66,11 +68,19 @@ func helloword(ctx *Context) error {
 }
 
 mux.HandlerFunc("/json", helloword, possum.JsonView{})
-htmlTemps := possum.NewHtmlTemplates("*.html")
-mux.HandleFunc("/html", helloworld, possum.NewHtmlView(htmlTemps, "base.html"))
-textTemps := possum.NewTextTemplates("*.html")
-mux.HandleFunc("/text", helloworld, possum.NewTextView(textTemps, "base.html"))
-mux.HandleFunc("/project.css", nil, possum.NewFileView("project.css", "text/css"))
+
+if err := possum.InitHtmlTemplates("*.html"); err != nil {
+	return
+}
+mux.HandleFunc("/html", helloworld, possum.NewHtmlView("base.html", "utf-8"))
+
+if err := possum.InitViewWatcher("*.html", possum.InitTextTemplates, nil);
+	err != nil {
+	return
+}
+mux.HandleFunc("/html", helloworld, possum.NewTextView("base.html", "utf-8"))
+
+mux.HandleFunc("/img.jpg", nil, possum.NewFileView("img.jpg", "image/jpeg"))
 ```
 
 Also, PProf can be initialized by `mux.InitPProf`:
@@ -84,6 +94,8 @@ And finally, listen and serve:
 ```go
 http.ListenAndServe(":8080", mux)
 ```
+
+For more details, please see the [demo][demo].
 
 Contributors
 ============
@@ -101,3 +113,6 @@ See LICENSE.
  [travis]: https://travis-ci.org/mikespook/possum
  [blog]: http://mikespook.com
  [twitter]: http://twitter.com/mikespook
+ [godoc-img]: https://godoc.org/github.com/mikespook/gorbac?status.png
+ [godoc]: https://godoc.org/github.com/mikespook/possum
+ [demo]: https://github.com/mikespook/possum/tree/master/demo

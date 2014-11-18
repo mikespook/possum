@@ -20,6 +20,7 @@ type Config struct {
 	Addr  string
 	PProf string
 	Log   configLog
+	Test  bool
 }
 
 func LoadConfig(filename string) (config *Config, err error) {
@@ -53,14 +54,33 @@ func main() {
 		log.Error(err)
 	}
 
+	if config.Test {
+		if err := possum.InitViewWatcher("*.html", possum.InitHtmlTemplates, nil); err != nil {
+			log.Error(err)
+			return
+		}
+		if err := possum.InitViewWatcher("*.html", possum.InitTextTemplates, nil); err != nil {
+			log.Error(err)
+			return
+		}
+	} else {
+		if err := possum.InitHtmlTemplates("*.html"); err != nil {
+			log.Error(err)
+			return
+		}
+
+		if err := possum.InitTextTemplates("*.html"); err != nil {
+			log.Error(err)
+			return
+		}
+	}
+
 	mux := possum.NewServerMux()
 	mux.HandleFunc("/json", helloworld, possum.JsonView{})
-	htmlTemps := possum.NewHtmlTemplates("*.html")
-	mux.HandleFunc("/html", helloworld, possum.NewHtmlView(htmlTemps, "base.html"))
-	textTemps := possum.NewTextTemplates("*.html")
-	mux.HandleFunc("/text", helloworld, possum.NewTextView(textTemps, "base.html"))
-	mux.HandleFunc("/project.css", nil, possum.NewFileView("project.css", "text/css"))
-	mux.HandleFunc("/img.jpg", nil, possum.NewFileView("img.jpg", "image/jpeg"))
+	mux.HandleFunc("/html", helloworld, possum.NewHtmlView("base.html", "utf-8"))
+	mux.HandleFunc("/text", helloworld, possum.NewTextView("base.html", "utf-8"))
+	mux.HandleFunc("/project.css", nil, possum.NewStaticFileView("project.css", "text/css"))
+	mux.HandleFunc("/img.jpg", nil, possum.NewStaticFileView("img.jpg", "image/jpeg"))
 
 	if config.PProf != "" {
 		log.Messagef("PProf: http://%s%s", config.Addr, config.PProf)
@@ -88,5 +108,6 @@ func helloworld(ctx *possum.Context) error {
 			"target": "world",
 		},
 	}
+	ctx.Response.Header().Set("Test", "Hello world")
 	return nil
 }

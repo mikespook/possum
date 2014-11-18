@@ -11,6 +11,8 @@ import (
 	"text/template"
 )
 
+// InitPProf registers pprof handlers to the ServeMux.
+// The pprof handlers can be specified a customized prefix.
 func (mux *ServeMux) InitPProf(prefix string) {
 	if prefix == "" {
 		prefix = "/debug/pprof"
