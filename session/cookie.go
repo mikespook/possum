@@ -98,7 +98,6 @@ func (storage *cookieStorage) Clean(s *Session) error {
 	value := &http.Cookie{Name: s.id}
 	fillCookie(CleanCookieOptions, value)
 	http.SetCookie(s.w, value)
-	s.Init()
 	return nil
 }
 
@@ -129,9 +128,6 @@ func (storage *cookieStorage) LoadTo(r *http.Request, s *Session) error {
 	}
 	err = decoding([]byte(s.id), cookie.Value, &s.data)
 	if err != nil {
-		if err != errValueTooShort {
-			return err
-		}
 		s.data = make(M)
 	}
 	return nil

@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	defaultKey = genKey(keySize)
+	defaultKey = genKey(keySize)[:keySize]
 )
 
 func SetKey(key []byte) {

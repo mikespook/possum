@@ -2,12 +2,11 @@ package session
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"sync"
 )
-
-const IdLength = 32
 
 type M map[string]interface{}
 
@@ -43,16 +42,23 @@ func (s *Session) Del(key string) (value interface{}) {
 	return
 }
 
+func (s *Session) init() {
+	s.data = make(M)
+	s.id = fmt.Sprintf("%x", genKey(512))
+}
+
 func (s *Session) Init() error {
 	defer s.Unlock()
 	s.Lock()
-	s.data = make(M)
-	s.id = fmt.Sprintf("%x", genKey(IdLength))
+	s.init()
 	return nil
 }
 
 func (s *Session) Clean() error {
-	defer s.Unlock()
+	defer func() {
+		s.init()
+		s.Unlock()
+	}()
 	s.Lock()
 	return s.storage.Clean(s)
 }
@@ -68,5 +74,7 @@ func genKey(size int) []byte {
 	if _, err := rand.Read(b); err != nil {
 		return nil
 	}
-	return b
+	h := sha256.New()
+	h.Write(b)
+	return h.Sum(nil)
 }
