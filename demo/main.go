@@ -50,7 +50,7 @@ func main() {
 		flag.Usage()
 		return
 	}
-	if err := log.Init(config.Log.File, log.StrToLevel(config.Log.Level)); err != nil {
+	if err := log.Init(config.Log.File, log.StrToLevel(config.Log.Level), log.DefaultCallDepth); err != nil {
 		log.Error(err)
 	}
 
