@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
-	"sync"
 	"sync/atomic"
 
 	html "html/template"
@@ -43,18 +42,9 @@ type Template interface {
 	ExecuteTemplate(wr io.Writer, name string, data interface{}) error
 }
 
-type tmpTemplate struct {
-	sync.Mutex
-	t Template
-}
-
-func (tmp *tmpTemplate) ExecuteTemplate(wr io.Writer, name string, data interface{}) error {
-	return tmp.t.ExecuteTemplate(wr, name, data)
-}
-
 var (
-	htmlTemp    tmpTemplate
-	textTemp    tmpTemplate
+	htmlTemp    *html.Template
+	textTemp    *text.Template
 	viewWatcher struct {
 		*fsnotify.Watcher
 		closer chan bool
@@ -65,29 +55,25 @@ var (
 // InitHtmlTemplates initialzes a series of HTML templates
 // in the directory `pattern`.
 func InitHtmlTemplates(pattern string) (err error) {
-	defer htmlTemp.Unlock()
-	htmlTemp.Lock()
-	htmlTemp.t, err = html.ParseGlob(pattern)
+	htmlTemp, err = html.ParseGlob(pattern)
 	return
 }
 
 // InitTextTemplates initialzes a series of plain text templates
 // in the directory `pattern`.
 func InitTextTemplates(pattern string) (err error) {
-	defer textTemp.Unlock()
-	textTemp.Lock()
-	textTemp.t, err = text.ParseGlob(pattern)
+	textTemp, err = text.ParseGlob(pattern)
 	return nil
 }
 
 // NewHtmlView retruns a TemplateView witch uses HTML templates internally.
 func NewHtmlView(name, charSet string) TemplateView {
-	return TemplateView{&htmlTemp, name, "text/html", charSet}
+	return TemplateView{htmlTemp, name, "text/html", charSet}
 }
 
 // NewTextView retruns a TemplateView witch uses text templates internally.
 func NewTextView(name, charSet string) TemplateView {
-	return TemplateView{&textTemp, name, "text/plain", charSet}
+	return TemplateView{textTemp, name, "text/plain", charSet}
 }
 
 // InitViewWatcher initialzes a watcher to watch templates changes in the `pattern`.
@@ -146,7 +132,7 @@ func CloseViewWatcher() error {
 
 // TemplateView represents `html/template` and `text/template` view.
 type TemplateView struct {
-	*tmpTemplate
+	Template
 	name        string
 	contentType string
 	charSet     string

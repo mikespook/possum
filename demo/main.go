@@ -87,7 +87,14 @@ func main() {
 		mux.InitPProf(config.PProf)
 	}
 	log.Messagef("Addr: %s", config.Addr)
-	go http.ListenAndServe(config.Addr, mux)
+	go func() {
+		if err := http.ListenAndServe(config.Addr, mux); err != nil {
+			log.Error(err)
+			if err := signal.Send(os.Getpid(), os.Interrupt); err != nil {
+				panic(err)
+			}
+		}
+	}()
 	sh := signal.NewHandler()
 	sh.Bind(os.Interrupt, func() bool {
 		log.Message("Exit")
