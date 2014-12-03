@@ -76,11 +76,12 @@ func main() {
 	}
 
 	mux := possum.NewServerMux()
-	mux.HandleFunc("/json", helloworld, possum.JsonView{})
-	mux.HandleFunc("/html", helloworld, possum.NewHtmlView("base.html", "utf-8"))
-	mux.HandleFunc("/text", helloworld, possum.NewTextView("base.html", "utf-8"))
-	mux.HandleFunc("/project.css", nil, possum.NewStaticFileView("project.css", "text/css"))
-	mux.HandleFunc("/img.jpg", nil, possum.NewStaticFileView("img.jpg", "image/jpeg"))
+	mux.HandleFunc(possum.NewSimpleRouter("/json"), helloworld, possum.JsonView{})
+	mux.HandleFunc(possum.NewWildcardRouter("/json/*/*/*"), helloworld, possum.JsonView{})
+	mux.HandleFunc(possum.NewSimpleRouter("/html"), helloworld, possum.NewHtmlView("base.html", "utf-8"))
+	mux.HandleFunc(possum.NewSimpleRouter("/text"), helloworld, possum.NewTextView("base.html", "utf-8"))
+	mux.HandleFunc(possum.NewSimpleRouter("/project.css"), nil, possum.NewStaticFileView("project.css", "text/css"))
+	mux.HandleFunc(possum.NewSimpleRouter("/img.jpg"), nil, possum.NewStaticFileView("img.jpg", "image/jpeg"))
 
 	if config.PProf != "" {
 		log.Messagef("PProf: http://%s%s", config.Addr, config.PProf)

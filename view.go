@@ -3,6 +3,7 @@ package possum
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"path/filepath"
@@ -176,4 +177,23 @@ func (view StaticFileView) ContentType() string {
 
 func (view StaticFileView) CharSet() string {
 	return ""
+}
+
+// SimpleView reads and responses data directly.
+type SimpleView struct{}
+
+func (view SimpleView) Render(data interface{}) (output []byte, err error) {
+	var buf bytes.Buffer
+	if _, err = buf.WriteString(fmt.Sprintf("%s", data)); err != nil {
+		return
+	}
+	return buf.Bytes(), nil
+}
+
+func (view SimpleView) ContentType() string {
+	return "text/html"
+}
+
+func (view SimpleView) CharSet() string {
+	return "utf-8"
 }

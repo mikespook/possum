@@ -12,15 +12,29 @@ type HandlerFunc func(ctx *Context) error
 
 // ServeMux is an HTTP request multiplexer.
 type ServeMux struct {
-	http.ServeMux
+	routers      *Routers
 	ErrorHandle  func(error)
 	PreRequest   HandlerFunc
 	PostResponse HandlerFunc
+	NotFound     struct {
+		View    View
+		Handler HandlerFunc
+	}
+}
+
+var defaultNotFound = func(ctx *Context) error {
+	ctx.Response.Status = http.StatusNotFound
+	ctx.Response.Data = "Not Found"
+	return nil
 }
 
 // NewHandler returns a new Handler.
 func NewServerMux() (mux *ServeMux) {
-	return &ServeMux{*http.NewServeMux(), nil, nil, nil}
+	nf := struct {
+		View    View
+		Handler HandlerFunc
+	}{SimpleView{}, defaultNotFound}
+	return &ServeMux{NewRouters(), nil, nil, nil, nf}
 }
 
 // Internal error handler
@@ -31,43 +45,10 @@ func (mux *ServeMux) err(err error) {
 }
 
 // HandleFunc specifies a pair of handler and view to handle
-// the request witch match pattern.
-func (mux *ServeMux) HandleFunc(pattern string, handler HandlerFunc, view View) {
-	f := func(w http.ResponseWriter, r *http.Request) {
-		ctx := newContext(w, r)
-
-		defer func() {
-			if err := recover(); err != nil {
-				if e, ok := err.(error); ok {
-					mux.err(e)
-				} else {
-					mux.err(fmt.Errorf("%s", err))
-				}
-				return
-			}
-			if err := ctx.flush(view); err != nil {
-				mux.err(err)
-				return
-			}
-			if mux.PostResponse != nil {
-				if err := mux.PostResponse(ctx); err != nil {
-					mux.err(err)
-					return
-				}
-			}
-		}()
-		if mux.PreRequest != nil {
-			if err := mux.PreRequest(ctx); mux.handleError(ctx, err) {
-				return
-			}
-		}
-		if handler != nil {
-			if err := handler(ctx); mux.handleError(ctx, err) {
-				return
-			}
-		}
-	}
-	mux.ServeMux.HandleFunc(pattern, f)
+// the request witch matching router.
+func (mux *ServeMux) HandleFunc(router Router, handler HandlerFunc, view View) {
+	router.HandleFunc(handler, view)
+	mux.routers.Add(router)
 }
 
 // handleError tests the context `Error` and assign it to response.
@@ -84,4 +65,53 @@ func (mux *ServeMux) handleError(ctx *Context, err error) bool {
 	ctx.Response.Data = err.Error()
 	mux.err(err)
 	return true
+}
+
+func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := newContext(w, r)
+	router := mux.routers.Find(r.URL.Path)
+	defer func() {
+		if err := recover(); err != nil {
+			if e, ok := err.(error); ok {
+				mux.err(e)
+			} else {
+				mux.err(fmt.Errorf("%s", err))
+			}
+			return
+		}
+		var view View
+		if router == nil {
+			view = mux.NotFound.View
+		} else {
+			view = router.View()
+		}
+		if view != nil {
+			if err := ctx.flush(view); err != nil {
+				mux.err(err)
+				return
+			}
+		}
+		if mux.PostResponse != nil {
+			if err := mux.PostResponse(ctx); err != nil {
+				mux.err(err)
+				return
+			}
+		}
+	}()
+	if mux.PreRequest != nil {
+		if err := mux.PreRequest(ctx); mux.handleError(ctx, err) {
+			return
+		}
+	}
+	var handler HandlerFunc
+	if router == nil {
+		handler = mux.NotFound.Handler
+	} else {
+		handler = router.Handler()
+	}
+	if handler != nil {
+		if err := handler(ctx); mux.handleError(ctx, err) {
+			return
+		}
+	}
 }

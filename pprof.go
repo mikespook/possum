@@ -17,10 +17,14 @@ func (mux *ServeMux) InitPProf(prefix string) {
 	if prefix == "" {
 		prefix = "/debug/pprof"
 	}
-	mux.Handle(fmt.Sprintf("%s/", prefix), pprofIndex(prefix))
-	mux.Handle(fmt.Sprintf("%s/cmdline", prefix), http.HandlerFunc(pprof.Cmdline))
-	mux.Handle(fmt.Sprintf("%s/profile", prefix), http.HandlerFunc(pprof.Profile))
-	mux.Handle(fmt.Sprintf("%s/symbol", prefix), http.HandlerFunc(pprof.Symbol))
+	mux.HandleFunc(NewSimpleRouter(fmt.Sprintf("%s/", prefix)),
+		wrapHttpHandlerFunc(pprofIndex(prefix)), nil)
+	mux.HandleFunc(NewSimpleRouter(fmt.Sprintf("%s/cmdline", prefix)),
+		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Cmdline)), nil)
+	mux.HandleFunc(NewSimpleRouter(fmt.Sprintf("%s/profile", prefix)),
+		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Profile)), nil)
+	mux.HandleFunc(NewSimpleRouter(fmt.Sprintf("%s/symbol", prefix)),
+		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Symbol)), nil)
 }
 
 const pprofTemp = `<html>
@@ -70,4 +74,12 @@ func pprofIndex(prefix string) http.HandlerFunc {
 		}
 	}
 	return f
+}
+
+func wrapHttpHandlerFunc(f http.HandlerFunc) HandlerFunc {
+	newF := func(ctx *Context) error {
+		f(ctx.Response.w, ctx.Request)
+		return nil
+	}
+	return newF
 }
