@@ -11,26 +11,26 @@ type Router interface {
 	Match(string) (url.Values, bool)
 }
 
-type Simple struct {
+type Base struct {
 	Path string
 }
 
-func (r Simple) Match(path string) (url.Values, bool) {
+func Simple(path string) Base {
+	return Base{path}
+}
+
+func (r Base) Match(path string) (url.Values, bool) {
 	return nil, path == r.Path
 }
 
 // wildcard matches path with wildcard
 type wildcard struct {
-	Simple
 	matches []string
 }
 
 func Wildcard(path string) *wildcard {
 	matches := strings.Split(path, "/")
 	return &wildcard{
-		Simple: Simple{
-			Path: path,
-		},
 		matches: matches,
 	}
 }
@@ -50,7 +50,6 @@ func (r *wildcard) Match(path string) (url.Values, bool) {
 
 // regex matches path with regex
 type regex struct {
-	Simple
 	r *regexp.Regexp
 }
 
@@ -60,9 +59,6 @@ func RegEx(path string) *regex {
 		panic(err)
 	}
 	return &regex{
-		Simple: Simple{
-			Path: path,
-		},
 		r: r,
 	}
 }
@@ -73,16 +69,12 @@ func (r *regex) Match(path string) (url.Values, bool) {
 
 // resource matches path with REST-full resources form.
 type resource struct {
-	Simple
 	matches []string
 }
 
 func Resource(path string) *resource {
 	matches := strings.Split(path, "/")
 	return &resource{
-		Simple: Simple{
-			Path: path,
-		},
 		matches: matches,
 	}
 }

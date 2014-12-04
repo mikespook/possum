@@ -50,7 +50,7 @@ func (rs *Routers) Add(r router.Router, h HandlerFunc, v view.View) {
 		h HandlerFunc
 	}{r, v, h}
 	// simple will full-match the path
-	if sr, ok := r.(*router.Simple); ok {
+	if sr, ok := r.(*router.Base); ok {
 		rs.s[sr.Path] = s
 		return
 	}
