@@ -80,15 +80,18 @@ mux.HandlerFunc(router.Simple("/json"), helloword, view.Json())
 if err := view.InitHtmlTemplates("*.html"); err != nil {
 	return
 }
-mux.HandleFunc(router.Wildcard("/html/*/*"), helloworld, view.Html("base.html", "utf-8"))
+mux.HandleFunc(router.Wildcard("/html/*/*"),
+	helloworld, view.Html("base.html", "utf-8"))
 
 if err := view.InitWatcher("*.html", view.InitTextTemplates, nil);
 	err != nil {
 	return
 }
-mux.HandleFunc(view.RegEx("/html/(.*)/[a-z]"), helloworld, view.Text("base.html", "utf-8"))
+mux.HandleFunc(view.RegEx("/html/(.*)/[a-z]"),
+	helloworld, view.Text("base.html", "utf-8"))
 
-mux.HandleFunc(view.Resource("/:img/:id"), nil, view.File("img.jpg", "image/jpeg"))
+mux.HandleFunc(view.Resource("/:img/:id"), 
+	nil, view.File("img.jpg", "image/jpeg"))
 ```
 
 Also, PProf can be initialized by `mux.InitPProf`:
