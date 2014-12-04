@@ -77,6 +77,10 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			ctx.Request.URL.Query().Add(k, v2)
 		}
 	}
+	if h == nil {
+		h = mux.NotFound.Handler
+		v = mux.NotFound.View
+	}
 	defer func() {
 		if err := recover(); err != nil {
 			if e, ok := err.(error); ok {
@@ -86,12 +90,11 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 			return
 		}
-		if v == nil {
-			v = mux.NotFound.View
-		}
-		if err := ctx.flush(v); err != nil {
-			mux.err(err)
-			return
+		if v != nil {
+			if err := ctx.flush(v); err != nil {
+				mux.err(err)
+				return
+			}
 		}
 		if mux.PostResponse != nil {
 			if err := mux.PostResponse(ctx); err != nil {
@@ -104,9 +107,6 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if err := mux.PreRequest(ctx); mux.handleError(ctx, err) {
 			return
 		}
-	}
-	if h == nil {
-		h = mux.NotFound.Handler
 	}
 	if err := h(ctx); mux.handleError(ctx, err) {
 		return

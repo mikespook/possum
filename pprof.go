@@ -69,7 +69,6 @@ func pprofIndex(prefix string) http.HandlerFunc {
 				return
 			}
 		}
-
 		profiles := rpprof.Profiles()
 		if err := indexTmpl.Execute(w, profiles); err != nil {
 			log.Print(err)

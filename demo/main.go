@@ -9,6 +9,8 @@ import (
 	"github.com/mikespook/golib/log"
 	"github.com/mikespook/golib/signal"
 	"github.com/mikespook/possum"
+	"github.com/mikespook/possum/router"
+	"github.com/mikespook/possum/view"
 	"gopkg.in/yaml.v2"
 )
 
@@ -55,34 +57,42 @@ func main() {
 	}
 
 	if config.Test {
-		if err := possum.InitViewWatcher("*.html", possum.InitHtmlTemplates, nil); err != nil {
+		if err := view.InitWatcher("*.html", view.InitHtmlTemplates, nil); err != nil {
 			log.Error(err)
 			return
 		}
-		if err := possum.InitViewWatcher("*.html", possum.InitTextTemplates, nil); err != nil {
+		if err := view.InitWatcher("*.html", view.InitTextTemplates, nil); err != nil {
 			log.Error(err)
 			return
 		}
 	} else {
-		if err := possum.InitHtmlTemplates("*.html"); err != nil {
+		if err := view.InitHtmlTemplates("*.html"); err != nil {
 			log.Error(err)
 			return
 		}
 
-		if err := possum.InitTextTemplates("*.html"); err != nil {
+		if err := view.InitTextTemplates("*.html"); err != nil {
 			log.Error(err)
 			return
 		}
 	}
 
 	mux := possum.NewServerMux()
-	mux.HandleFunc(possum.NewSimpleRouter("/json"), helloworld, possum.JsonView{})
-	mux.HandleFunc(possum.NewWildcardRouter("/json/*/*/*"), helloworld, possum.JsonView{})
-	mux.HandleFunc(possum.NewSimpleRouter("/html"), helloworld, possum.NewHtmlView("base.html", "utf-8"))
-	mux.HandleFunc(possum.NewSimpleRouter("/text"), helloworld, possum.NewTextView("base.html", "utf-8"))
-	mux.HandleFunc(possum.NewSimpleRouter("/project.css"), nil, possum.NewStaticFileView("project.css", "text/css"))
-	mux.HandleFunc(possum.NewSimpleRouter("/img.jpg"), nil, possum.NewStaticFileView("img.jpg", "image/jpeg"))
-
+	mux.HandleFunc(router.Simple{"/json"}, helloworld, view.Json())
+	mux.HandleFunc(router.Wildcard("/json/*/*/*"), helloworld, view.Json())
+	mux.HandleFunc(router.Simple{"/html"}, helloworld, view.Html("base.html", "utf-8"))
+	mux.HandleFunc(router.Simple{"/text"}, helloworld, view.Text("base.html", "utf-8"))
+	mux.HandleFunc(router.Simple{"/project.css"}, nil, view.StaticFile("project.css", "text/css"))
+	mux.HandleFunc(router.Simple{"/img.jpg"}, nil, view.StaticFile("img.jpg", "image/jpeg"))
+	mux.ErrorHandle = func(err error) {
+		log.Error(err)
+	}
+	mux.PostResponse = func(ctx *possum.Context) error {
+		log.Debugf("[%d] %s:%s \"%s\"", ctx.Response.Status,
+			ctx.Request.RemoteAddr, ctx.Request.Method,
+			ctx.Request.URL.String())
+		return nil
+	}
 	if config.PProf != "" {
 		log.Messagef("PProf: http://%s%s", config.Addr, config.PProf)
 		mux.InitPProf(config.PProf)
