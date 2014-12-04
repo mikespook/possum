@@ -78,12 +78,12 @@ func main() {
 	}
 
 	mux := possum.NewServerMux()
-	mux.HandleFunc(router.Simple{"/json"}, helloworld, view.Json())
+	mux.HandleFunc(router.Simple("/json"), helloworld, view.Json())
 	mux.HandleFunc(router.Wildcard("/json/*/*/*"), helloworld, view.Json())
-	mux.HandleFunc(router.Simple{"/html"}, helloworld, view.Html("base.html", "utf-8"))
-	mux.HandleFunc(router.Simple{"/text"}, helloworld, view.Text("base.html", "utf-8"))
-	mux.HandleFunc(router.Simple{"/project.css"}, nil, view.StaticFile("project.css", "text/css"))
-	mux.HandleFunc(router.Simple{"/img.jpg"}, nil, view.StaticFile("img.jpg", "image/jpeg"))
+	mux.HandleFunc(router.Simple("/html"), helloworld, view.Html("base.html", "utf-8"))
+	mux.HandleFunc(router.Simple("/text"), helloworld, view.Text("base.html", "utf-8"))
+	mux.HandleFunc(router.Simple("/project.css"), nil, view.StaticFile("project.css", "text/css"))
+	mux.HandleFunc(router.Simple("/img.jpg"), nil, view.StaticFile("img.jpg", "image/jpeg"))
 	mux.ErrorHandle = func(err error) {
 		log.Error(err)
 	}
