@@ -6,8 +6,6 @@ Possum
 
 Possum is a micro web library for Go.
 
-_Possum has not been officially released yet, as it is still in active development._
-
 Install
 =======
 
@@ -19,6 +17,16 @@ go get github.com/mikespook/possum
 
 Usage
 =====
+
+Importing the package and sub-packages:
+
+```go
+import (
+	"github.com/mikespook/possum"
+	"github.com/mikespook/possum/router"
+	"github.com/mikespook/possum/view"
+)
+```
 
 Possum uses `Context` passing data, handling request and rendering response.
 
@@ -57,7 +65,7 @@ mux.PostResponse = func(ctx *Context) error {
 }
 ```
 
-Add handlers with different views:
+Add handlers with different views to a specific router:
 
 ```go
 f := session.NewFactory(session.CookieStorage('session-id', nil))
@@ -67,20 +75,20 @@ func helloword(ctx *Context) error {
 	return nil
 }
 
-mux.HandlerFunc("/json", helloword, possum.JsonView{})
+mux.HandlerFunc(router.Simple("/json"), helloword, view.Json())
 
-if err := possum.InitHtmlTemplates("*.html"); err != nil {
+if err := view.InitHtmlTemplates("*.html"); err != nil {
 	return
 }
-mux.HandleFunc("/html", helloworld, possum.NewHtmlView("base.html", "utf-8"))
+mux.HandleFunc(router.Wildcard("/html/*/*"), helloworld, view.Html("base.html", "utf-8"))
 
-if err := possum.InitViewWatcher("*.html", possum.InitTextTemplates, nil);
+if err := view.InitWatcher("*.html", view.InitTextTemplates, nil);
 	err != nil {
 	return
 }
-mux.HandleFunc("/html", helloworld, possum.NewTextView("base.html", "utf-8"))
+mux.HandleFunc(view.RegEx("/html/(.*)/[a-z]"), helloworld, view.Text("base.html", "utf-8"))
 
-mux.HandleFunc("/img.jpg", nil, possum.NewFileView("img.jpg", "image/jpeg"))
+mux.HandleFunc(view.Resource("/:img/:id"), nil, view.File("img.jpg", "image/jpeg"))
 ```
 
 Also, PProf can be initialized by `mux.InitPProf`:
