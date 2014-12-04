@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/mikespook/possum/session"
+	"github.com/mikespook/possum/view"
 )
 
 // A Response represents an HTTP response status
@@ -34,7 +35,7 @@ func (ctx *Context) Redirect(code int, url string) {
 	ctx.Response.Data = url
 }
 
-func (ctx *Context) flush(view View) error {
+func (ctx *Context) flush(v view.View) error {
 	if ctx.Session != nil {
 		if err := ctx.Session.Flush(); err != nil {
 			return err
@@ -51,18 +52,18 @@ func (ctx *Context) flush(view View) error {
 		return NewError(http.StatusInternalServerError,
 			fmt.Sprintf("%T is not an URL.", ctx.Response.Data))
 	}
-	cType := view.ContentType()
+	cType := v.ContentType()
 	if cType == "" {
 		cType = "text/plain"
 	}
-	charSet := view.CharSet()
+	charSet := v.CharSet()
 	if charSet != "" {
 		charSet = fmt.Sprintf("; charset=%s", charSet)
 	}
 	ctx.Response.w.Header().Set("Content-Type",
 		fmt.Sprintf("%s%s", cType, charSet))
 	ctx.Response.w.WriteHeader(ctx.Response.Status)
-	data, err := view.Render(ctx.Response.Data)
+	data, err := v.Render(ctx.Response.Data)
 	if err != nil {
 		return err
 	}

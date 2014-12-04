@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+
+	"github.com/mikespook/possum/router"
 )
 
 // InitPProf registers pprof handlers to the ServeMux.
@@ -17,13 +19,13 @@ func (mux *ServeMux) InitPProf(prefix string) {
 	if prefix == "" {
 		prefix = "/debug/pprof"
 	}
-	mux.HandleFunc(NewSimpleRouter(fmt.Sprintf("%s/", prefix)),
+	mux.HandleFunc(router.Simple{fmt.Sprintf("%s/", prefix)},
 		wrapHttpHandlerFunc(pprofIndex(prefix)), nil)
-	mux.HandleFunc(NewSimpleRouter(fmt.Sprintf("%s/cmdline", prefix)),
+	mux.HandleFunc(router.Simple{fmt.Sprintf("%s/cmdline", prefix)},
 		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Cmdline)), nil)
-	mux.HandleFunc(NewSimpleRouter(fmt.Sprintf("%s/profile", prefix)),
+	mux.HandleFunc(router.Simple{fmt.Sprintf("%s/profile", prefix)},
 		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Profile)), nil)
-	mux.HandleFunc(NewSimpleRouter(fmt.Sprintf("%s/symbol", prefix)),
+	mux.HandleFunc(router.Simple{fmt.Sprintf("%s/symbol", prefix)},
 		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Symbol)), nil)
 }
 
