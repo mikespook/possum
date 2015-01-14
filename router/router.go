@@ -67,26 +67,61 @@ func (r *regex) Match(path string) (url.Values, bool) {
 	return nil, r.r.MatchString(path)
 }
 
-// resource matches path with REST-full resources form.
-type resource struct {
+// colon matches path with REST-full resources URI in perfix colon form.
+type colon struct {
 	matches []string
 }
 
-func Resource(path string) *resource {
+func Colon(path string) *colon {
 	matches := strings.Split(path, "/")
-	return &resource{
+	return &colon{
 		matches: matches,
 	}
 }
 
-func (r *resource) Match(path string) (url.Values, bool) {
+func (c *colon) Match(path string) (url.Values, bool) {
 	matches := strings.Split(path, "/")
 	i := 0
 	params := make(url.Values)
 	var resKey, resValue string
-	for _, v := range r.matches {
+	for _, v := range c.matches {
 		if v != "" && v[0] == ':' {
 			if matches[i] == v[1:] {
+				resKey = matches[i]
+				i++
+				resValue = matches[i]
+			} else {
+				return nil, false
+			}
+			params.Add(resKey, resValue)
+		} else if matches[i] != v {
+			return nil, false
+		}
+		i++
+	}
+	return params, true
+}
+
+// brace matches path with REST-full resources URI in brace form.
+type brace struct {
+	matches []string
+}
+
+func Brace(path string) *brace {
+	matches := strings.Split(path, "/")
+	return &brace{
+		matches: matches,
+	}
+}
+
+func (b *brace) Match(path string) (url.Values, bool) {
+	matches := strings.Split(path, "/")
+	i := 0
+	params := make(url.Values)
+	var resKey, resValue string
+	for _, v := range b.matches {
+		if v != "" && v[0] == '{' && v[len(v)-1] == '}' {
+			if matches[i] == v[1:len(v)-1] {
 				resKey = matches[i]
 				i++
 				resValue = matches[i]

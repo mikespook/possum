@@ -2,8 +2,32 @@ package router
 
 import "testing"
 
-func TestResource(t *testing.T) {
-	r := Resource("/test/:a/:b/test")
+func TestColon(t *testing.T) {
+	r := Colon("/test/:a/:b/test")
+	if params, ok := r.Match("/test/a/1/b/2/test"); !ok {
+		t.Error("Not match!", params)
+		return
+	} else {
+		t.Log(params)
+	}
+
+	if params, ok := r.Match("/test/b/1/a/2/test"); ok {
+		t.Error("Match!", params)
+		return
+	} else {
+		t.Log(params)
+	}
+
+	if params, ok := r.Match("test/a/1/b/2/test"); ok {
+		t.Error("Match!", params)
+		return
+	} else {
+		t.Log(params)
+	}
+}
+
+func TestBrace(t *testing.T) {
+	r := Brace("/test/{a}/{b}/test")
 	if params, ok := r.Match("/test/a/1/b/2/test"); !ok {
 		t.Error("Not match!", params)
 		return
