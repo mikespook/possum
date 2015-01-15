@@ -106,12 +106,11 @@ func main() {
 			}
 		}
 	}()
-	sh := signal.NewHandler()
-	sh.Bind(os.Interrupt, func() bool {
+	signal.Bind(os.Interrupt, func() uint {
 		log.Message("Exit")
-		return true
+		return signal.BreakExit
 	})
-	sh.Loop()
+	signal.Loop()
 }
 
 func css(ctx *possum.Context) error {
