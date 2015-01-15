@@ -2,86 +2,109 @@ package router
 
 import "testing"
 
+type aTCase map[string]bool
+
+var tCases = map[string]map[string]aTCase{
+	"Colon": {
+		"/test/:a/:b/test": aTCase{
+			"/test/a/1/b/2/test": true,
+			"/test/b/1/a/2/test": false,
+			"test/a/1/b/2/test":  false,
+		}},
+	"Brace": {
+		"/test/{a}/{b}/test": aTCase{
+			"/test/a/1/b/2/test": true,
+			"/test/b/1/a/2/test": false,
+			"test/a/1/b/2/test":  false,
+		}},
+	"RegEx": {
+		"/test/(.*)/test": aTCase{
+			"/test/a/1/b/2/test": true,
+			"/foo/b/1/a/2/test":  false,
+			"test/a/1/b/2/test":  false,
+		}},
+	"Wildcard": {
+		"/test/*/*/test": aTCase{
+			"/test/foo/bar/test": true,
+			"/foo/b/1/a/2/test":  false,
+			"test/a/1/b/2/test":  false,
+		},
+	},
+}
+
+func testingRouter(t *testing.T, r Router, a aTCase) {
+	for k, v := range a {
+		if params, ok := r.Match(k); ok != v {
+			t.Errorf("%v expected %b, got %b", params, v, ok)
+		} else {
+			t.Log(params)
+		}
+	}
+
+}
+
+func benchmarkingRouter(b *testing.B, r Router, a aTCase) {
+	for i := 0; i < b.N; i++ {
+		for k, v := range a {
+			if params, ok := r.Match(k); ok != v {
+				b.Errorf("%v expected %b, got %b", params, v, ok)
+			}
+		}
+	}
+}
+
 func TestColon(t *testing.T) {
-	r := Colon("/test/:a/:b/test")
-	if params, ok := r.Match("/test/a/1/b/2/test"); !ok {
-		t.Error("Not match!", params)
-		return
-	} else {
-		t.Log(params)
-	}
-
-	if params, ok := r.Match("/test/b/1/a/2/test"); ok {
-		t.Error("Match!", params)
-		return
-	} else {
-		t.Log(params)
-	}
-
-	if params, ok := r.Match("test/a/1/b/2/test"); ok {
-		t.Error("Match!", params)
-		return
-	} else {
-		t.Log(params)
+	for k, v := range tCases["Colon"] {
+		r := Colon(k)
+		testingRouter(t, r, v)
 	}
 }
 
 func TestBrace(t *testing.T) {
-	r := Brace("/test/{a}/{b}/test")
-	if params, ok := r.Match("/test/a/1/b/2/test"); !ok {
-		t.Error("Not match!", params)
-		return
-	} else {
-		t.Log(params)
-	}
-
-	if params, ok := r.Match("/test/b/1/a/2/test"); ok {
-		t.Error("Match!", params)
-		return
-	} else {
-		t.Log(params)
-	}
-
-	if params, ok := r.Match("test/a/1/b/2/test"); ok {
-		t.Error("Match!", params)
-		return
-	} else {
-		t.Log(params)
+	for k, v := range tCases["Brace"] {
+		r := Brace(k)
+		testingRouter(t, r, v)
 	}
 }
 
 func TestRegEx(t *testing.T) {
-	r := RegEx("/test/(.*)/test")
-	if params, ok := r.Match("/test/a/1/b/2/test"); !ok {
-		t.Error("Not match!", params)
-		return
-	}
-
-	if params, ok := r.Match("/test1/b/1/a/2/test1"); ok {
-		t.Error("Match!", params)
-		return
-	}
-
-	if params, ok := r.Match("test/a/1/b/2/test"); ok {
-		t.Error("Match!", params)
-		return
+	for k, v := range tCases["RegEx"] {
+		r := RegEx(k)
+		testingRouter(t, r, v)
 	}
 }
 
 func TestWildcard(t *testing.T) {
-	r := Wildcard("/test/*/*/test")
-	if params, ok := r.Match("/test/a/b/test"); !ok {
-		t.Error("Not match!", params)
-		return
+	for k, v := range tCases["Wildcard"] {
+		r := Wildcard(k)
+		testingRouter(t, r, v)
 	}
+}
 
-	if params, ok := r.Match("/test/b/1/a/2/test"); ok {
-		t.Error("Match!", params)
-		return
+func BenchmarkColon(b *testing.B) {
+	for k, v := range tCases["Colon"] {
+		r := Colon(k)
+		benchmarkingRouter(b, r, v)
 	}
+}
 
-	if params, ok := r.Match("/a/1/b/2/test"); ok {
-		t.Error("Match!", params)
-		return
+func BenchmarkBrace(b *testing.B) {
+	for k, v := range tCases["Brace"] {
+		r := Brace(k)
+		benchmarkingRouter(b, r, v)
+	}
+}
+
+func BenchmarkRegEx(b *testing.B) {
+	for k, v := range tCases["RegEx"] {
+		r := RegEx(k)
+		benchmarkingRouter(b, r, v)
+	}
+}
+
+func BenchmarkWildcard(b *testing.B) {
+	for k, v := range tCases["Wildcard"] {
+		r := Wildcard(k)
+		benchmarkingRouter(b, r, v)
 	}
 }
