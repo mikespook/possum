@@ -110,7 +110,7 @@ func main() {
 		log.Message("Exit")
 		return signal.BreakExit
 	})
-	signal.Loop()
+	signal.Wait()
 }
 
 func css(ctx *possum.Context) error {
