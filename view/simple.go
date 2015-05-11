@@ -3,12 +3,12 @@ package view
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 )
 
 // Simple reads and responses data directly.
 type simple struct {
-	contentType string
-	charSet     string
+	header http.Header
 }
 
 func (view simple) Render(data interface{}) (output []byte, err error) {
@@ -19,21 +19,19 @@ func (view simple) Render(data interface{}) (output []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-func (view simple) ContentType() string {
-	if view.contentType == "" {
-
-		return ContentTypeHTML
-	}
-	return view.contentType
-}
-
-func (view simple) CharSet() string {
-	if view.charSet == "" {
-		return CharSetUTF8
-	}
-	return view.charSet
+func (view simple) Header() http.Header {
+	return view.header
 }
 
 func Simple(contentType, charSet string) simple {
-	return simple{contentType, charSet}
+	if contentType == "" {
+		contentType = ContentTypePlain
+	}
+	if charSet == "" {
+		charSet = CharSetUTF8
+	}
+	header := make(http.Header)
+	header.Set("Content-Type",
+		fmt.Sprintf("%s; charset=%s", contentType, charSet))
+	return simple{header}
 }

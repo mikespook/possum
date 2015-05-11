@@ -2,7 +2,9 @@ package view
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"net/http"
 	"path/filepath"
 	"sync/atomic"
 
@@ -44,12 +46,24 @@ func InitTextTemplates(pattern string) (err error) {
 
 // NewHtml retruns a TemplateView witch uses HTML templates internally.
 func Html(name, charSet string) template {
-	return template{htmlTemp, name, ContentTypeHTML, charSet}
+	if htmlTemp == nil {
+		panic("Function `InitHtmlTemplates` should be called first.")
+	}
+	header := make(http.Header)
+	header.Set("Content-Type",
+		fmt.Sprintf("%s; charset=%s", ContentTypeHTML, charSet))
+	return template{htmlTemp, name, header}
 }
 
 // NewText retruns a TemplateView witch uses text templates internally.
 func Text(name, charSet string) template {
-	return template{textTemp, name, ContentTypePlain, charSet}
+	if textTemp == nil {
+		panic("Function `InitTextTemplates` should be called first.")
+	}
+	header := make(http.Header)
+	header.Set("Content-Type",
+		fmt.Sprintf("%s; charset=%s", ContentTypePlain, charSet))
+	return template{textTemp, name, header}
 }
 
 // InitWatcher initialzes a watcher to watch templates changes in the `pattern`.
@@ -109,9 +123,8 @@ func CloseWatcher() error {
 // Template represents `html/template` and `text/template` view.
 type template struct {
 	tmp
-	name        string
-	contentType string
-	charSet     string
+	name   string
+	header http.Header
 }
 
 func (view template) Render(data interface{}) (output []byte, err error) {
@@ -123,10 +136,6 @@ func (view template) Render(data interface{}) (output []byte, err error) {
 	return
 }
 
-func (view template) ContentType() string {
-	return view.contentType
-}
-
-func (view template) CharSet() string {
-	return view.charSet
+func (view template) Header() http.Header {
+	return view.header
 }

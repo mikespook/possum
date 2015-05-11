@@ -1,9 +1,12 @@
 package view
 
+import "net/http"
+
 const (
-	ContentTypeJSON  = "application/json"
-	ContentTypeHTML  = "text/html"
-	ContentTypePlain = "text/plain"
+	ContentTypeJSON   = "application/json"
+	ContentTypeHTML   = "text/html"
+	ContentTypePlain  = "text/plain"
+	ContentTypeBinary = "application/octet-stream"
 
 	CharSetUTF8 = "utf-8"
 )
@@ -11,6 +14,5 @@ const (
 // View is an interface to render response with a specific format.
 type View interface {
 	Render(interface{}) ([]byte, error)
-	ContentType() string
-	CharSet() string
+	Header() http.Header
 }

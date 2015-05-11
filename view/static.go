@@ -1,26 +1,29 @@
 package view
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+	"net/http"
+)
 
-// NewStaticFile returns an new StaticFile for serving static files.
-func StaticFile(filename string, cType string) staticFile {
-	return staticFile{filename, cType}
+// StaticFile returns the view which can serve static files.
+func StaticFile(filename string, contentType string) staticFile {
+	if contentType == "" {
+		contentType = ContentTypeBinary
+	}
+	header := make(http.Header)
+	header.Set("Content-Type", contentType)
+	return staticFile{filename, header}
 }
 
-// StaticFile reads and responses static files.
 type staticFile struct {
-	filename    string
-	contentType string
+	filename string
+	header   http.Header
+}
+
+func (view staticFile) Header() http.Header {
+	return view.header
 }
 
 func (view staticFile) Render(data interface{}) (output []byte, err error) {
 	return ioutil.ReadFile(view.filename)
-}
-
-func (view staticFile) ContentType() string {
-	return view.contentType
-}
-
-func (view staticFile) CharSet() string {
-	return ""
 }
