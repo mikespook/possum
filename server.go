@@ -36,7 +36,7 @@ func NewServerMux() (mux *ServeMux) {
 	nf := struct {
 		View    view.View
 		Handler HandlerFunc
-	}{view.Simple(), defaultNotFound}
+	}{view.Simple(view.ContentTypePlain, view.CharSetUTF8), defaultNotFound}
 	return &ServeMux{NewRouters(), nil, nil, nil, nf}
 }
 

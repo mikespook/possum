@@ -52,16 +52,11 @@ func (ctx *Context) flush(v view.View) error {
 		return NewError(http.StatusInternalServerError,
 			fmt.Sprintf("%T is not an URL.", ctx.Response.Data))
 	}
-	cType := v.ContentType()
-	if cType == "" {
-		cType = "text/plain"
+	for hk, hv := range v.Header() {
+		for _, cv := range hv {
+			ctx.Response.Header().Add(hk, cv)
+		}
 	}
-	charSet := v.CharSet()
-	if charSet != "" {
-		charSet = fmt.Sprintf("; charset=%s", charSet)
-	}
-	ctx.Response.w.Header().Set("Content-Type",
-		fmt.Sprintf("%s%s", cType, charSet))
 	ctx.Response.w.WriteHeader(ctx.Response.Status)
 	data, err := v.Render(ctx.Response.Data)
 	if err != nil {

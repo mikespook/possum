@@ -14,7 +14,7 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
-// Template is an interface to render template `name` with data,
+// `tmp` is an interface to render template `name` with data,
 // and output to wr.
 type tmp interface {
 	ExecuteTemplate(wr io.Writer, name string, data interface{}) error
@@ -44,7 +44,7 @@ func InitTextTemplates(pattern string) (err error) {
 	return nil
 }
 
-// NewHtml retruns a TemplateView witch uses HTML templates internally.
+// Html retruns a TemplateView witch uses HTML templates internally.
 func Html(name, charSet string) template {
 	if htmlTemp == nil {
 		panic("Function `InitHtmlTemplates` should be called first.")
@@ -55,7 +55,7 @@ func Html(name, charSet string) template {
 	return template{htmlTemp, name, header}
 }
 
-// NewText retruns a TemplateView witch uses text templates internally.
+// Text retruns a TemplateView witch uses text templates internally.
 func Text(name, charSet string) template {
 	if textTemp == nil {
 		panic("Function `InitTextTemplates` should be called first.")
