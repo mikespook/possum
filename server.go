@@ -72,12 +72,12 @@ func (mux *ServeMux) handleError(ctx *Context, err error) bool {
 func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := newContext(w, req)
 	p, h, v := mux.routers.Find(req.URL.Path)
-	for k, v1 := range p {
-		for _, v2 := range v1 {
-			ctx.Request.URL.Query().Add(k, v2)
-		}
+	ctx.Request.URL.RawQuery = fmt.Sprintf("%s&%s", ctx.Request.URL.RawQuery, p.Encode())
+	if err := ctx.Request.ParseForm(); err != nil {
+		mux.err(err)
+		return
 	}
-	if h == nil {
+	if v == nil && h == nil && p == nil {
 		h = mux.NotFound.Handler
 		v = mux.NotFound.View
 	}
@@ -108,7 +108,9 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	if err := h(ctx); mux.handleError(ctx, err) {
-		return
+	if h != nil {
+		if err := h(ctx); mux.handleError(ctx, err) {
+			return
+		}
 	}
 }

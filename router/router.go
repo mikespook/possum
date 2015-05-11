@@ -15,11 +15,11 @@ type Base struct {
 	Path string
 }
 
-func Simple(path string) Base {
-	return Base{path}
+func Simple(path string) *Base {
+	return &Base{path}
 }
 
-func (r Base) Match(path string) (url.Values, bool) {
+func (r *Base) Match(path string) (url.Values, bool) {
 	return nil, path == r.Path
 }
 
@@ -40,12 +40,16 @@ func (r *wildcard) Match(path string) (url.Values, bool) {
 	if len(matches) != len(r.matches) {
 		return nil, false
 	}
+	p := url.Values{}
 	for k, v := range r.matches {
 		if v != "*" && matches[k] != v {
 			return nil, false
 		}
+		if v == "*" && matches[k] != "" {
+			p.Add(matches[k], matches[k])
+		}
 	}
-	return nil, true
+	return p, true
 }
 
 // regex matches path with regex
