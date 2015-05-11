@@ -57,33 +57,40 @@ func main() {
 	}
 
 	if config.Test {
-		if err := view.InitWatcher("*.html", view.InitHtmlTemplates, nil); err != nil {
+		if err := view.InitWatcher("./templates/*.html", view.InitHtmlTemplates, nil); err != nil {
 			log.Error(err)
 			return
 		}
-		if err := view.InitWatcher("*.html", view.InitTextTemplates, nil); err != nil {
+		if err := view.InitWatcher("./templates/*.html", view.InitTextTemplates, nil); err != nil {
 			log.Error(err)
 			return
 		}
 	} else {
-		if err := view.InitHtmlTemplates("*.html"); err != nil {
+		if err := view.InitHtmlTemplates("./templates/*.html"); err != nil {
 			log.Error(err)
 			return
 		}
 
-		if err := view.InitTextTemplates("*.html"); err != nil {
+		if err := view.InitTextTemplates("./templates/*.html"); err != nil {
 			log.Error(err)
 			return
 		}
 	}
 
 	mux := possum.NewServerMux()
-	mux.HandleFunc(router.Simple("/json"), helloworld, view.Json())
-	mux.HandleFunc(router.Wildcard("/json/*/*/*"), helloworld, view.Json())
+
+	mux.HandleFunc(router.Simple("/"), nil, view.Html("index.html", "utf-8"))
+	mux.HandleFunc(router.Simple("/json"), helloworld, view.Json("utf-8"))
+	mux.HandleFunc(router.Wildcard("/json/*/*/*"), helloworld, view.Json("utf-8"))
 	mux.HandleFunc(router.Simple("/html"), helloworld, view.Html("base.html", "utf-8"))
 	mux.HandleFunc(router.Simple("/text"), helloworld, view.Text("base.html", "utf-8"))
-	mux.HandleFunc(router.Simple("/project.css"), nil, view.StaticFile("project.css", "text/css"))
-	mux.HandleFunc(router.Simple("/img.jpg"), nil, view.StaticFile("img.jpg", "image/jpeg"))
+	mux.HandleFunc(router.Simple("/project.css"), nil, view.StaticFile("statics/project.css", "text/css"))
+	tmp, err := view.PreloadFile("statics/img.jpg", "image/jpeg")
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	mux.HandleFunc(router.Simple("/img.jpg"), nil, tmp)
 	mux.ErrorHandle = func(err error) {
 		log.Error(err)
 	}
@@ -123,6 +130,7 @@ func helloworld(ctx *possum.Context) error {
 		"content": map[string]string{
 			"msg":    "hello",
 			"target": "world",
+			"params": ctx.Request.URL.Query().Encode(),
 		},
 	}
 	ctx.Response.Header().Set("Test", "Hello world")
