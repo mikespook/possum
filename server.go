@@ -72,7 +72,13 @@ func (mux *ServeMux) handleError(ctx *Context, err error) bool {
 func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := newContext(w, req)
 	p, h, v := mux.routers.Find(req.URL.Path)
-	ctx.Request.URL.RawQuery = fmt.Sprintf("%s&%s", ctx.Request.URL.RawQuery, p.Encode())
+	if p != nil {
+		if ctx.Request.URL.RawQuery == "" {
+			ctx.Request.URL.RawQuery = p.Encode()
+		} else {
+			ctx.Request.URL.RawQuery = fmt.Sprintf("%s&%s", ctx.Request.URL.RawQuery, p.Encode())
+		}
+	}
 	if err := ctx.Request.ParseForm(); err != nil {
 		mux.err(err)
 		return
