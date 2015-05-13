@@ -37,7 +37,7 @@ func LoadConfig(filename string) (config *Config, err error) {
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "", "Path to the configuration file")
+	flag.StringVar(&configFile, "config", "config.yaml", "Path to the configuration file")
 	flag.Parse()
 }
 
