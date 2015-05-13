@@ -28,7 +28,7 @@ import (
 )
 ```
 
-Possum uses `Context` passing data, handling request and rendering response.
+Possum uses `Context` for passing data, handling request and rendering response.
 
 This is how to create a new server mux for Possum:
 
@@ -94,13 +94,19 @@ mux.HandleFunc(view.Resource("/:img/:id"),
 	nil, view.File("img.jpg", "image/jpeg"))
 ```
 
-Also, PProf can be initialized by `mux.InitPProf`:
+Also, a PProf methods can be initialized by `mux.InitPProf`:
 
 ```go
 mux.InitPProf("/_pprof")
 ```
 
-And finally, listen and serve:
+It will serve profiles and debug informations through `http://ip:port/_pprof`.
+
+E.g.:
+
+![][pprof]
+
+And finally, it is a standard way for listening and serving:
 
 ```go
 http.ListenAndServe(":8080", mux)
@@ -127,3 +133,4 @@ See LICENSE.
  [godoc-img]: https://godoc.org/github.com/mikespook/gorbac?status.png
  [godoc]: https://godoc.org/github.com/mikespook/possum
  [demo]: https://github.com/mikespook/possum/tree/master/demo
+ [pprof]: https://pbs.twimg.com/media/CE4k3SIUMAAZiLy.png
