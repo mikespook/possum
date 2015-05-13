@@ -19,7 +19,7 @@ func (mux *ServeMux) InitPProf(prefix string) {
 	if prefix == "" {
 		prefix = "/debug/pprof"
 	}
-	mux.HandleFunc(router.Simple(fmt.Sprintf("%s/", prefix)),
+	mux.HandleFunc(router.Wildcard(fmt.Sprintf("%s/*", prefix)),
 		wrapHttpHandlerFunc(pprofIndex(prefix)), nil)
 	mux.HandleFunc(router.Simple(fmt.Sprintf("%s/cmdline", prefix)),
 		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Cmdline)), nil)
@@ -32,11 +32,18 @@ func (mux *ServeMux) InitPProf(prefix string) {
 const pprofTemp = `<html>
 <head>
 <title>%[1]s/</title>
+<style type="text/css">
+h1 {border-bottom: 5px solid black;}
+</style>
 </head>
-%[1]s/<br>
-<br>
 <body>
-profiles:<br>
+<h1>Links</h1>
+<ul>
+	<li><a href="%[1]s/cmdline" target="_blank">Command line</a></li>
+	<li><a href="%[1]s/symbol" target="_blank">Symbol</a></li>
+	<li><a href="%[1]s/profile">Profile</a></li>
+</ul>
+<h1>Profiles</h1>
 <table>
 {{range .}}
 <tr><td align=right>{{.Count}}<td><a href="%[1]s/{{.Name}}?debug=1">{{.Name}}</a>
