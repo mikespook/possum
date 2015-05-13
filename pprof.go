@@ -37,20 +37,19 @@ h1 {border-bottom: 5px solid black;}
 </style>
 </head>
 <body>
-<h1>Links</h1>
+<h1>Debug information</h1>
 <ul>
 	<li><a href="%[1]s/cmdline" target="_blank">Command line</a></li>
 	<li><a href="%[1]s/symbol" target="_blank">Symbol</a></li>
-	<li><a href="%[1]s/profile">Profile</a></li>
+	<li><a href="%[1]s/goroutine?debug=2">Full goroutine stack dump</a></li>
 </ul>
 <h1>Profiles</h1>
 <table>
 {{range .}}
 <tr><td align=right>{{.Count}}<td><a href="%[1]s/{{.Name}}?debug=1">{{.Name}}</a>
 {{end}}
+<tr><td align=right><td><a href="%[1]s/profile">30-second CPU</a>
 </table>
-<br>
-<a href="%[1]s/goroutine?debug=2">full goroutine stack dump</a><br>
 </body>
 </html>
 `
