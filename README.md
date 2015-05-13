@@ -30,21 +30,21 @@ import (
 
 Possum uses `Context` passing data, handling request and rendering response.
 
-Create a new possum server mux :
+This is how to create a new server mux for Possum:
 
 ```go
 mux := possum.NewServerMux()
 ```
 
-Assign a customized error handler:
+And assign a customized error handler:
 
 ```go
-mux.ErrorHandler = func(err error) {
+mux.ErrorHandle = func(err error) {
 	fmt.Println(err)
 }
 ```
 
-`PreRequest` and `PostResponse` is useful for pre-checking or customizing logs:
+`PreRequest` and `PostResponse` are useful for pre-checking or customizing logs:
 
 ```go
 mux.PreRequest = func(ctx *Context) error {
@@ -65,7 +65,7 @@ mux.PostResponse = func(ctx *Context) error {
 }
 ```
 
-Add handlers with different views to a specific router:
+A specific path can bind to a different combination of routers, handlers and views:
 
 ```go
 f := session.NewFactory(session.CookieStorage('session-id', nil))
