@@ -85,7 +85,7 @@ func pprofIndex(prefix string) http.HandlerFunc {
 
 func wrapHttpHandlerFunc(f http.HandlerFunc) HandlerFunc {
 	newF := func(ctx *Context) error {
-		f(ctx.Response.w, ctx.Request)
+		f(ctx.Response, ctx.Request)
 		return nil
 	}
 	return newF

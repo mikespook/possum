@@ -13,12 +13,7 @@ import (
 type Response struct {
 	Status int
 	Data   interface{}
-	w      http.ResponseWriter
-}
-
-// Header returns http.Header.
-func (response Response) Header() http.Header {
-	return response.w.Header()
+	http.ResponseWriter
 }
 
 // A Context contains a Request witch is processed by server handler,
@@ -46,7 +41,7 @@ func (ctx *Context) flush(v view.View) error {
 		ctx.Response.Status == http.StatusSeeOther ||
 		ctx.Response.Status == http.StatusTemporaryRedirect {
 		if url, ok := ctx.Response.Data.(string); ok {
-			http.Redirect(ctx.Response.w, ctx.Request, url, ctx.Response.Status)
+			http.Redirect(ctx.Response, ctx.Request, url, ctx.Response.Status)
 			return nil
 		}
 		return NewError(http.StatusInternalServerError,
@@ -57,12 +52,12 @@ func (ctx *Context) flush(v view.View) error {
 			ctx.Response.Header().Add(hk, cv)
 		}
 	}
-	ctx.Response.w.WriteHeader(ctx.Response.Status)
+	ctx.Response.WriteHeader(ctx.Response.Status)
 	data, err := v.Render(ctx.Response.Data)
 	if err != nil {
 		return err
 	}
-	_, err = ctx.Response.w.Write(data)
+	_, err = ctx.Response.Write(data)
 	return err
 }
 
@@ -70,8 +65,8 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context {
 	ctx := &Context{
 		Request: r,
 		Response: Response{
-			Status: http.StatusOK,
-			w:      w,
+			Status:         http.StatusOK,
+			ResponseWriter: w,
 		},
 	}
 	return ctx
