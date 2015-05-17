@@ -12,6 +12,9 @@ type simple struct {
 }
 
 func (view simple) Render(data interface{}) (output []byte, err error) {
+	if data == nil {
+		return nil, nil
+	}
 	var buf bytes.Buffer
 	if _, err = buf.WriteString(fmt.Sprintf("%s", data)); err != nil {
 		return
