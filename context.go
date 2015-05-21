@@ -47,9 +47,11 @@ func (ctx *Context) flush(v view.View) error {
 		return NewError(http.StatusInternalServerError,
 			fmt.Sprintf("%T is not an URL.", ctx.Response.Data))
 	}
-	for hk, hv := range v.Header() {
-		for _, cv := range hv {
-			ctx.Response.Header().Add(hk, cv)
+	if h := v.Header(); h != nil {
+		for hk, hv := range h {
+			for _, cv := range hv {
+				ctx.Response.Header().Add(hk, cv)
+			}
 		}
 	}
 	ctx.Response.WriteHeader(ctx.Response.Status)
