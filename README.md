@@ -87,10 +87,10 @@ if err := view.InitWatcher("*.html", view.InitTextTemplates, nil);
 	err != nil {
 	return
 }
-mux.HandleFunc(view.RegEx("/html/(.*)/[a-z]"),
+mux.HandleFunc(router.RegEx("/html/(.*)/[a-z]"),
 	helloworld, view.Text("base.html", "utf-8"))
 
-mux.HandleFunc(view.Resource("/:img/:id"), 
+mux.HandleFunc(router.Resource("/:img/:id"), 
 	nil, view.File("img.jpg", "image/jpeg"))
 ```
 
