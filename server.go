@@ -31,7 +31,7 @@ var defaultNotFound = func(ctx *Context) error {
 	return nil
 }
 
-// NewHandler returns a new Handler.
+// NewServerMux returns a new Handler.
 func NewServerMux() (mux *ServeMux) {
 	nf := struct {
 		View    view.View
