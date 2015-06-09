@@ -6,6 +6,13 @@ Possum
 
 Possum is a micro web library for Go.
 
+It has following modules:
+
+ * Routers
+ * Views
+ * Session
+ * Helpers
+
 Install
 =======
 

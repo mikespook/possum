@@ -42,3 +42,13 @@ func Rand(h ...HandlerFunc) HandlerFunc {
 	}
 	return f
 }
+
+// WrapHttpHandlerFunc wraps http.HandlerFunc in possum.HandlerFunc.
+// See pprof.go.
+func WrapHttpHandlerFunc(f http.HandlerFunc) HandlerFunc {
+	newF := func(ctx *Context) error {
+		f(ctx.Response, ctx.Request)
+		return nil
+	}
+	return newF
+}

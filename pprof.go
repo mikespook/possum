@@ -20,13 +20,13 @@ func (mux *ServeMux) InitPProf(prefix string) {
 		prefix = "/debug/pprof"
 	}
 	mux.HandleFunc(router.Wildcard(fmt.Sprintf("%s/*", prefix)),
-		wrapHttpHandlerFunc(pprofIndex(prefix)), nil)
+		WrapHttpHandlerFunc(pprofIndex(prefix)), nil)
 	mux.HandleFunc(router.Simple(fmt.Sprintf("%s/cmdline", prefix)),
-		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Cmdline)), nil)
+		WrapHttpHandlerFunc(http.HandlerFunc(pprof.Cmdline)), nil)
 	mux.HandleFunc(router.Simple(fmt.Sprintf("%s/profile", prefix)),
-		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Profile)), nil)
+		WrapHttpHandlerFunc(http.HandlerFunc(pprof.Profile)), nil)
 	mux.HandleFunc(router.Simple(fmt.Sprintf("%s/symbol", prefix)),
-		wrapHttpHandlerFunc(http.HandlerFunc(pprof.Symbol)), nil)
+		WrapHttpHandlerFunc(http.HandlerFunc(pprof.Symbol)), nil)
 }
 
 const pprofTemp = `<html>
@@ -81,12 +81,4 @@ func pprofIndex(prefix string) http.HandlerFunc {
 		}
 	}
 	return f
-}
-
-func wrapHttpHandlerFunc(f http.HandlerFunc) HandlerFunc {
-	newF := func(ctx *Context) error {
-		f(ctx.Response, ctx.Request)
-		return nil
-	}
-	return newF
 }
