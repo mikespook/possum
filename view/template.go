@@ -21,9 +21,14 @@ type tmp interface {
 }
 
 var (
-	htmlTemp *html.Template
-	textTemp *text.Template
-	watcher  struct {
+	htmlTemp struct {
+		*html.Template
+	}
+	textTemp struct {
+		*text.Template
+	}
+
+	watcher struct {
 		*fsnotify.Watcher
 		closer chan bool
 		count  uint32
@@ -33,37 +38,37 @@ var (
 // InitHtmlTemplates initialzes a series of HTML templates
 // in the directory `pattern`.
 func InitHtmlTemplates(pattern string) (err error) {
-	htmlTemp, err = html.ParseGlob(pattern)
+	htmlTemp.Template, err = html.ParseGlob(pattern)
 	return
 }
 
 // InitTextTemplates initialzes a series of plain text templates
 // in the directory `pattern`.
 func InitTextTemplates(pattern string) (err error) {
-	textTemp, err = text.ParseGlob(pattern)
+	textTemp.Template, err = text.ParseGlob(pattern)
 	return nil
 }
 
 // Html retruns a TemplateView witch uses HTML templates internally.
 func Html(name, charSet string) template {
-	if htmlTemp == nil {
+	if htmlTemp.Template == nil {
 		panic("Function `InitHtmlTemplates` should be called first.")
 	}
 	header := make(http.Header)
 	header.Set("Content-Type",
 		fmt.Sprintf("%s; charset=%s", ContentTypeHTML, charSet))
-	return template{htmlTemp, name, header}
+	return template{&htmlTemp, name, header}
 }
 
 // Text retruns a TemplateView witch uses text templates internally.
 func Text(name, charSet string) template {
-	if textTemp == nil {
+	if textTemp.Template == nil {
 		panic("Function `InitTextTemplates` should be called first.")
 	}
 	header := make(http.Header)
 	header.Set("Content-Type",
 		fmt.Sprintf("%s; charset=%s", ContentTypePlain, charSet))
-	return template{textTemp, name, header}
+	return template{&textTemp, name, header}
 }
 
 // InitWatcher initialzes a watcher to watch templates changes in the `pattern`.
