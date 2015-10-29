@@ -54,7 +54,7 @@ mux.ErrorHandle = func(err error) {
 `PreRequest` and `PostResponse` are useful for pre-checking or customizing logs:
 
 ```go
-mux.PreRequest = func(ctx *Context) error {
+mux.PreRequest = func(ctx *possum.Context) error {
 	host, port, err := net.SplitHostPort(ctx.Request.RemoteAddr)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ mux.PreRequest = func(ctx *Context) error {
 	return nil
 }
 
-mux.PostResponse = func(ctx *Context) error {
+mux.PostResponse = func(ctx *possum.Context) error {
 	fmt.Printf("[%d] %s:%s \"%s\"", ctx.Response.Status,
 		ctx.Request.RemoteAddr,	ctx.Request.Method,
 		ctx.Request.URL.String())		
@@ -82,7 +82,7 @@ func helloword(ctx *Context) error {
 	return nil
 }
 
-mux.HandlerFunc(router.Simple("/json"), helloword, view.Json())
+mux.HandlerFunc(router.Simple("/json"), helloword, view.Json(view.CharSetUTF8))
 
 if err := view.InitHtmlTemplates("*.html"); err != nil {
 	return
