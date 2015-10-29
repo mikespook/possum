@@ -1,4 +1,4 @@
-// Possum is a micro web library for Go.
+// Package possum is a micro web library for Go.
 package possum
 
 import (

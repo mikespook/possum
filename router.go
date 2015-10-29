@@ -57,6 +57,7 @@ func (rs *Routers) Add(r router.Router, h HandlerFunc, v view.View) {
 	rs.l.PushFront(s)
 }
 
+// NewRouters initailizes Routers instance.
 func NewRouters() *Routers {
 	return &Routers{
 		s: make(map[string]struct {

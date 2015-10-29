@@ -25,9 +25,9 @@ type Context struct {
 	Session  *session.Session
 }
 
-// If the code belongs to one of StatusMovedPermanently, StatusFound,
-// StatusSeeOther and StatusTemporaryRedirect, Redirect performs
-// a redirecting to the url.
+// Redirect performs a redirecting to the url, if the code belongs to
+// one of StatusMovedPermanently, StatusFound, StatusSeeOther, and
+// StatusTemporaryRedirect.
 func (ctx *Context) Redirect(code int, url string) {
 	ctx.Response.Status = code
 	ctx.Response.Data = url

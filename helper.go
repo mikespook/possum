@@ -45,9 +45,9 @@ func Rand(h ...HandlerFunc) HandlerFunc {
 	return f
 }
 
-// WrapHttpHandlerFunc wraps http.HandlerFunc in possum.HandlerFunc.
+// WrapHTTPHandlerFunc wraps http.HandlerFunc in possum.HandlerFunc.
 // See pprof.go.
-func WrapHttpHandlerFunc(f http.HandlerFunc) HandlerFunc {
+func WrapHTTPHandlerFunc(f http.HandlerFunc) HandlerFunc {
 	newF := func(ctx *Context) error {
 		f(ctx.Response, ctx.Request)
 		return nil
@@ -55,8 +55,8 @@ func WrapHttpHandlerFunc(f http.HandlerFunc) HandlerFunc {
 	return newF
 }
 
-// WebSocketHandlerFunc convert websocket function to possum.HandlerFunc
+// WebSocketHandlerFunc convert websocket function to possum.HandlerFunc.
 func WebSocketHandlerFunc(f func(ws *websocket.Conn)) HandlerFunc {
 	h := websocket.Handler(f)
-	return WrapHttpHandlerFunc(h.ServeHTTP)
+	return WrapHTTPHandlerFunc(h.ServeHTTP)
 }
