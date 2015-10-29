@@ -3,6 +3,8 @@ package possum
 import (
 	"math/rand"
 	"net/http"
+
+	"golang.org/x/net/websocket"
 )
 
 // Method takes one map as a paramater.
@@ -51,4 +53,10 @@ func WrapHttpHandlerFunc(f http.HandlerFunc) HandlerFunc {
 		return nil
 	}
 	return newF
+}
+
+// WebSocketHandlerFunc convert websocket function to possum.HandlerFunc
+func WebSocketHandlerFunc(f func(ws *websocket.Conn)) HandlerFunc {
+	h := websocket.Handler(f)
+	return WrapHttpHandlerFunc(h.ServeHTTP)
 }
