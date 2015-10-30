@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Possum by mikespook</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Possum</h1>
+        <p>A micro web library for Go.</p>
+
+        <p class="view"><a href="https://github.com/mikespook/possum">View the Project on GitHub <small>mikespook/possum</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/mikespook/possum/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/mikespook/possum/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/mikespook/possum">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="possum" class="anchor" href="#possum" aria-hidden="true"><span class="octicon octicon-link"></span></a>Possum</h1>
+
+<p><a href="https://travis-ci.org/mikespook/possum"><img src="https://travis-ci.org/mikespook/possum.png?branch=master" alt="Build Status"></a>
+<a href="https://godoc.org/github.com/mikespook/possum"><img src="https://godoc.org/github.com/mikespook/gorbac?status.png" alt="GoDoc"></a></p>
+
+<p>Possum is a micro web library for Go.</p>
+
+<p>It has following modules:</p>
+
+<ul>
+<li>Routers</li>
+<li>Views</li>
+<li>Session</li>
+<li>Helpers</li>
+</ul>
+
+<h1>
+<a id="install" class="anchor" href="#install" aria-hidden="true"><span class="octicon octicon-link"></span></a>Install</h1>
+
+<p>Install the package:</p>
+
+<div class="highlight highlight-source-shell"><pre>go get github.com/mikespook/possum</pre></div>
+
+<h1>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h1>
+
+<p>Importing the package and sub-packages:</p>
+
+<div class="highlight highlight-source-go"><pre><span class="pl-k">import</span> (
+    <span class="pl-s"><span class="pl-pds">"</span>github.com/mikespook/possum<span class="pl-pds">"</span></span>
+    <span class="pl-s"><span class="pl-pds">"</span>github.com/mikespook/possum/router<span class="pl-pds">"</span></span>
+    <span class="pl-s"><span class="pl-pds">"</span>github.com/mikespook/possum/view<span class="pl-pds">"</span></span>
+)</pre></div>
+
+<p>Possum uses <code>Context</code> for passing data, handling request and rendering response.</p>
+
+<p>This is how to create a new server mux for Possum:</p>
+
+<div class="highlight highlight-source-go"><pre><span class="pl-smi">mux</span> <span class="pl-k">:=</span> possum.<span class="pl-c1">NewServerMux</span>()</pre></div>
+
+<p>And assign a customized error handler:</p>
+
+<div class="highlight highlight-source-go"><pre>mux.<span class="pl-smi">ErrorHandle</span> = <span class="pl-c1">func</span>(err <span class="pl-k">error</span>) {
+    fmt.<span class="pl-c1">Println</span>(err)
+}</pre></div>
+
+<p><code>PreRequest</code> and <code>PostResponse</code> are useful for pre-checking or customizing logs:</p>
+
+<div class="highlight highlight-source-go"><pre>mux.<span class="pl-smi">PreRequest</span> = <span class="pl-c1">func</span>(ctx *possum.<span class="pl-smi">Context</span>) <span class="pl-k">error</span> {
+    <span class="pl-smi">host</span>, <span class="pl-smi">port</span>, <span class="pl-smi">err</span> <span class="pl-k">:=</span> net.<span class="pl-c1">SplitHostPort</span>(ctx.<span class="pl-smi">Request</span>.<span class="pl-smi">RemoteAddr</span>)
+    <span class="pl-k">if</span> err != <span class="pl-c1">nil</span> {
+        <span class="pl-k">return</span> err
+    }
+    <span class="pl-k">if</span> host != <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span> {
+        <span class="pl-k">return</span> possum.<span class="pl-c1">NewError</span>(http.<span class="pl-smi">StatusForbidden</span>, <span class="pl-s"><span class="pl-pds">"</span>Localhost only<span class="pl-pds">"</span></span>)
+    }
+    <span class="pl-k">return</span> <span class="pl-c1">nil</span>
+}
+
+mux.<span class="pl-smi">PostResponse</span> = <span class="pl-c1">func</span>(ctx *possum.<span class="pl-smi">Context</span>) <span class="pl-k">error</span> {
+    fmt.<span class="pl-c1">Printf</span>(<span class="pl-s"><span class="pl-pds">"</span>[<span class="pl-c1">%d</span>] <span class="pl-c1">%s</span>:<span class="pl-c1">%s</span> <span class="pl-cce">\"</span><span class="pl-c1">%s</span><span class="pl-cce">\"</span><span class="pl-pds">"</span></span>, ctx.<span class="pl-smi">Response</span>.<span class="pl-smi">Status</span>,
+        ctx.<span class="pl-smi">Request</span>.<span class="pl-smi">RemoteAddr</span>, ctx.<span class="pl-smi">Request</span>.<span class="pl-smi">Method</span>,
+        ctx.<span class="pl-smi">Request</span>.<span class="pl-smi">URL</span>.<span class="pl-c1">String</span>())       
+}</pre></div>
+
+<p>A specific path can bind to a different combination of routers, handlers and views:</p>
+
+<div class="highlight highlight-source-go"><pre><span class="pl-smi">f</span> <span class="pl-k">:=</span> session.<span class="pl-c1">NewFactory</span>(session.<span class="pl-c1">CookieStorage</span>(<span class="pl-s"><span class="pl-pds">'</span>session-id<span class="pl-pds">'</span></span>, <span class="pl-c1">nil</span>))
+
+<span class="pl-k">func</span> <span class="pl-en">helloword</span>(<span class="pl-v">ctx</span> *<span class="pl-v">Context</span>) <span class="pl-v">error</span> {
+    ctx.<span class="pl-c1">StartSession</span>(f)
+    <span class="pl-k">return</span> <span class="pl-c1">nil</span>
+}
+
+mux.<span class="pl-c1">HandlerFunc</span>(router.<span class="pl-c1">Simple</span>(<span class="pl-s"><span class="pl-pds">"</span>/json<span class="pl-pds">"</span></span>), helloword, view.<span class="pl-c1">Json</span>(view.<span class="pl-smi">CharSetUTF8</span>))
+
+<span class="pl-k">if</span> <span class="pl-smi">err</span> <span class="pl-k">:=</span> view.<span class="pl-c1">InitHtmlTemplates</span>(<span class="pl-s"><span class="pl-pds">"</span>*.html<span class="pl-pds">"</span></span>); err != <span class="pl-c1">nil</span> {
+    <span class="pl-k">return</span>
+}
+mux.<span class="pl-c1">HandleFunc</span>(router.<span class="pl-c1">Wildcard</span>(<span class="pl-s"><span class="pl-pds">"</span>/html/*/*<span class="pl-pds">"</span></span>),
+    helloworld, view.<span class="pl-c1">Html</span>(<span class="pl-s"><span class="pl-pds">"</span>base.html<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span>))
+
+<span class="pl-k">if</span> <span class="pl-smi">err</span> <span class="pl-k">:=</span> view.<span class="pl-c1">InitWatcher</span>(<span class="pl-s"><span class="pl-pds">"</span>*.html<span class="pl-pds">"</span></span>, view.<span class="pl-smi">InitTextTemplates</span>, <span class="pl-c1">nil</span>);
+    err != <span class="pl-c1">nil</span> {
+    <span class="pl-k">return</span>
+}
+mux.<span class="pl-c1">HandleFunc</span>(router.<span class="pl-c1">RegEx</span>(<span class="pl-s"><span class="pl-pds">"</span>/html/(.*)/[a-z]<span class="pl-pds">"</span></span>),
+    helloworld, view.<span class="pl-c1">Text</span>(<span class="pl-s"><span class="pl-pds">"</span>base.html<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span>))
+
+mux.<span class="pl-c1">HandleFunc</span>(router.<span class="pl-c1">Colon</span>(<span class="pl-s"><span class="pl-pds">"</span>/:img/:id<span class="pl-pds">"</span></span>), 
+    <span class="pl-c1">nil</span>, view.<span class="pl-c1">File</span>(<span class="pl-s"><span class="pl-pds">"</span>img.jpg<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>image/jpeg<span class="pl-pds">"</span></span>))</pre></div>
+
+<p>Also, a PProf methods can be initialized by <code>mux.InitPProf</code>:</p>
+
+<div class="highlight highlight-source-go"><pre>mux.<span class="pl-c1">InitPProf</span>(<span class="pl-s"><span class="pl-pds">"</span>/_pprof<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>It will serve profiles and debug informations through <code>http://ip:port/_pprof</code>.</p>
+
+<p>E.g.:</p>
+
+<p><img src="https://pbs.twimg.com/media/CE4k3SIUMAAZiLy.png" alt=""></p>
+
+<p>And finally, it is a standard way for listening and serving:</p>
+
+<div class="highlight highlight-source-go"><pre>http.<span class="pl-c1">ListenAndServe</span>(<span class="pl-s"><span class="pl-pds">"</span>:8080<span class="pl-pds">"</span></span>, mux)</pre></div>
+
+<p>For more details, please see the <a href="https://github.com/mikespook/possum/tree/master/demo">demo</a>.</p>
+
+<h1>
+<a id="contributors" class="anchor" href="#contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributors</h1>
+
+<p>(<em>Alphabetic order</em>)</p>
+
+<ul>
+<li>
+<a href="http://mikespook.com">Xing Xing</a> <a href="mailto:mikespook@gmail.com">mikespook@gmail.com</a> <a href="http://twitter.com/mikespook">@Twitter</a>
+</li>
+</ul>
+
+<h1>
+<a id="open-source---mit-software-license" class="anchor" href="#open-source---mit-software-license" aria-hidden="true"><span class="octicon octicon-link"></span></a>Open Source - MIT Software License</h1>
+
+<p>See LICENSE.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/mikespook">mikespook</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
