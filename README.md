@@ -3,7 +3,7 @@ Possum
 
 [![Build Status][travis-img]][travis]
 [![GoDoc][godoc-img]][godoc]
-[![Coverage Status][coveralls-img]][coveralls]
+[![Coverage Status](https://coveralls.io/repos/mikespook/possum/badge.svg?branch=master&service=github)](https://coveralls.io/github/mikespook/possum?branch=master)
 
 Possum is a micro web library for Go.
 
