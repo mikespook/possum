@@ -42,7 +42,7 @@ var tCases = map[string]map[string]aTCase{
 func testingRouter(t *testing.T, r Router, a aTCase) {
 	for k, v := range a {
 		if params, ok := r.Match(k); ok != v {
-			t.Errorf("%v expected %b, got %b", params, v, ok)
+			t.Errorf("%v expected %t, got %t", params, v, ok)
 		} else {
 			t.Log(params)
 		}
@@ -54,7 +54,7 @@ func benchmarkingRouter(b *testing.B, r Router, a aTCase) {
 	for i := 0; i < b.N; i++ {
 		for k, v := range a {
 			if params, ok := r.Match(k); ok != v {
-				b.Errorf("%v expected %b, got %b", params, v, ok)
+				b.Errorf("%v expected %t, got %t", params, v, ok)
 			}
 		}
 	}
