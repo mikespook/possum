@@ -11,12 +11,10 @@ type json struct {
 	header http.Header
 }
 
-func (view json) Render(data interface{}) (output []byte, err error) {
-	return j.Marshal(data)
-}
-
-func (view json) Header() http.Header {
-	return view.header
+func (view json) Render(data interface{}) (output []byte, h http.Header, err error) {
+	output, err = j.Marshal(data)
+	h = view.header
+	return
 }
 
 func Json(charSet string) json {

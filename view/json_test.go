@@ -13,24 +13,20 @@ var jsonTestCases = map[string]interface{}{
 	"{\"Foo\":\"bar\"}": struct{ Foo string }{"bar"},
 }
 
-func TestJsonHeader(t *testing.T) {
-	v := Json("")
-	a := v.Header().Get("Content-Type")
-	b := fmt.Sprintf("%s; charset=%s", ContentTypeJSON, CharSetUTF8)
-	if a != b {
-		t.Errorf("Expected Content-Type is %s, got %s.", b, a)
-	}
-}
-
 func TestJsonRendering(t *testing.T) {
 	jv := Json("")
 	for k, v := range jsonTestCases {
-		body, err := jv.Render(v)
+		body, header, err := jv.Render(v)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if string(body) != k {
 			t.Fatalf("%v should be rendered to %s, got %s.", v, k, body)
+		}
+		a := header.Get("Content-Type")
+		b := fmt.Sprintf("%s; charset=%s", ContentTypeJSON, CharSetUTF8)
+		if a != b {
+			t.Errorf("Expected Content-Type is %s, got %s.", b, a)
 		}
 	}
 }

@@ -29,10 +29,6 @@ type preloadFile struct {
 	header http.Header
 }
 
-func (view preloadFile) Header() http.Header {
-	return view.header
-}
-
-func (view preloadFile) Render(data interface{}) (output []byte, err error) {
-	return view.body, nil
+func (view preloadFile) Render(data interface{}) (output []byte, h http.Header, err error) {
+	return view.body, view.header, nil
 }

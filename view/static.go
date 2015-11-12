@@ -20,10 +20,8 @@ type staticFile struct {
 	header   http.Header
 }
 
-func (view staticFile) Header() http.Header {
-	return view.header
-}
-
-func (view staticFile) Render(data interface{}) (output []byte, err error) {
-	return ioutil.ReadFile(view.filename)
+func (view staticFile) Render(data interface{}) (output []byte, h http.Header, err error) {
+	output, err = ioutil.ReadFile(view.filename)
+	h = view.header
+	return
 }

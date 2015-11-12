@@ -13,6 +13,5 @@ const (
 
 // View is an interface to render response with a specific format.
 type View interface {
-	Render(interface{}) ([]byte, error)
-	Header() http.Header
+	Render(interface{}) ([]byte, http.Header, error)
 }

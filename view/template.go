@@ -132,15 +132,12 @@ type template struct {
 	header http.Header
 }
 
-func (view template) Render(data interface{}) (output []byte, err error) {
+func (view template) Render(data interface{}) (output []byte, h http.Header, err error) {
 	var buf bytes.Buffer
 	if err = view.ExecuteTemplate(&buf, view.name, data); err != nil {
 		return
 	}
 	output = buf.Bytes()
+	h = view.header
 	return
-}
-
-func (view template) Header() http.Header {
-	return view.header
 }

@@ -11,19 +11,15 @@ type simple struct {
 	header http.Header
 }
 
-func (view simple) Render(data interface{}) (output []byte, err error) {
+func (view simple) Render(data interface{}) (output []byte, h http.Header, err error) {
 	if data == nil {
-		return nil, nil
+		return nil, view.header, nil
 	}
 	var buf bytes.Buffer
 	if _, err = buf.WriteString(fmt.Sprintf("%s", data)); err != nil {
 		return
 	}
-	return buf.Bytes(), nil
-}
-
-func (view simple) Header() http.Header {
-	return view.header
+	return buf.Bytes(), view.header, nil
 }
 
 func Simple(contentType, charSet string) simple {

@@ -50,18 +50,19 @@ func (ctx *Context) flush(v view.View) error {
 		return NewError(http.StatusInternalServerError,
 			fmt.Sprintf("%T is not an URL.", ctx.Response.Data))
 	}
-	if h := v.Header(); h != nil {
-		for hk, hv := range h {
+	data, header, err := v.Render(ctx.Response.Data)
+	if err != nil {
+		return err
+	}
+	ctx.Response.WriteHeader(ctx.Response.Status)
+	if header != nil {
+		for hk, hv := range header {
 			for _, cv := range hv {
 				ctx.Response.Header().Add(hk, cv)
 			}
 		}
 	}
-	ctx.Response.WriteHeader(ctx.Response.Status)
-	data, err := v.Render(ctx.Response.Data)
-	if err != nil {
-		return err
-	}
+
 	_, err = ctx.Response.Write(data)
 	return err
 }
