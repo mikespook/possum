@@ -108,9 +108,8 @@ func newStaticHandle(dir, autoindex string) possum.HandlerFunc {
 		if err != nil {
 			return err
 		}
-		contentType := mime.TypeByExtension(f)
 		ctx.Response.Data = viewData{
-			contentType: contentType,
+			contentType: mime.TypeByExtension(path.Ext(f)),
 			body:        body,
 		}
 		return nil

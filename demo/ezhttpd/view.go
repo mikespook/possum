@@ -1,6 +1,11 @@
 package main
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/mikespook/possum/view"
+)
 
 type viewData struct {
 	contentType string
@@ -9,19 +14,20 @@ type viewData struct {
 
 type staticView struct{}
 
-func (view staticView) Render(data interface{}) (output []byte, err error) {
+func (v staticView) Render(data interface{}) (output []byte, h http.Header, err error) {
 	if data == nil {
-		return nil, errAccessDeny
+		return nil, nil, errAccessDeny
 	}
 	switch param := data.(type) {
 	case viewData:
-		return param.body, nil
+		header := make(http.Header)
+		header.Set("Content-Type", param.contentType)
+		return param.body, header, nil
 	case string:
-		return []byte(param), nil
+		header := make(http.Header)
+		header.Set("Content-Type",
+			fmt.Sprintf("%s; charset=%s", view.ContentTypePlain, view.CharSetUTF8))
+		return []byte(param), header, nil
 	}
-	return nil, errWrongType
-}
-
-func (view staticView) Header() http.Header {
-	return nil
+	return nil, nil, errWrongType
 }
