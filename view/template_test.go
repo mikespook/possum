@@ -16,7 +16,7 @@ func TestTextTemplates(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v := Text("possum.testing", CharSetUTF8)
+	v := Text("possum.testing", "", "")
 	body, header, err := v.Render(_body)
 	if err != nil {
 		t.Fatal(err)
@@ -41,7 +41,7 @@ func TestHtmlTemplates(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v := Html("possum.testing", CharSetUTF8)
+	v := Html("possum.testing", "", "")
 	body, header, err := v.Render(_body)
 	if err != nil {
 		t.Fatal(err)

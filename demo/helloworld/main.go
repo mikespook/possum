@@ -79,11 +79,11 @@ func main() {
 
 	mux := possum.NewServerMux()
 
-	mux.HandleFunc(router.Simple("/"), nil, view.Html("index.html", "utf-8"))
+	mux.HandleFunc(router.Simple("/"), nil, view.Html("index.html", "", ""))
 	mux.HandleFunc(router.Simple("/json"), helloworld, view.Json("utf-8"))
 	mux.HandleFunc(router.Wildcard("/json/*/*/*"), helloworld, view.Json("utf-8"))
-	mux.HandleFunc(router.Simple("/html"), helloworld, view.Html("base.html", "utf-8"))
-	mux.HandleFunc(router.Simple("/text"), helloworld, view.Text("base.html", "utf-8"))
+	mux.HandleFunc(router.Simple("/html"), helloworld, view.Html("base.html", "", ""))
+	mux.HandleFunc(router.Simple("/text"), helloworld, view.Text("base.html", "", ""))
 	mux.HandleFunc(router.Simple("/project.css"), nil, view.StaticFile("statics/project.css", "text/css"))
 	tmp, err := view.PreloadFile("statics/img.jpg", "image/jpeg")
 	if err != nil {
