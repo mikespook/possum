@@ -54,7 +54,6 @@ func (ctx *Context) flush(v view.View) error {
 	if err != nil {
 		return err
 	}
-	ctx.Response.WriteHeader(ctx.Response.Status)
 	if header != nil {
 		for hk, hv := range header {
 			for _, cv := range hv {
@@ -62,7 +61,7 @@ func (ctx *Context) flush(v view.View) error {
 			}
 		}
 	}
-
+	ctx.Response.WriteHeader(ctx.Response.Status)
 	_, err = ctx.Response.Write(data)
 	return err
 }
