@@ -2,13 +2,15 @@ package view
 
 import (
 	"io/ioutil"
+	"mime"
 	"net/http"
+	"path"
 )
 
 // StaticFile returns the view which can serve static files.
 func StaticFile(filename string, contentType string) staticFile {
 	if contentType == "" {
-		contentType = ContentTypeBinary
+		contentType = mime.TypeByExtension(path.Ext(filename))
 	}
 	header := make(http.Header)
 	header.Set("Content-Type", contentType)

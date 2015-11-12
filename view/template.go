@@ -50,24 +50,36 @@ func InitTextTemplates(pattern string) (err error) {
 }
 
 // Html retruns a TemplateView witch uses HTML templates internally.
-func Html(name, charSet string) template {
+func Html(name, contentType, charSet string) template {
 	if htmlTemp.Template == nil {
 		panic("Function `InitHtmlTemplates` should be called first.")
 	}
+	if contentType == "" {
+		contentType = ContentTypeHTML
+	}
+	if charSet == "" {
+		charSet = CharSetUTF8
+	}
 	header := make(http.Header)
 	header.Set("Content-Type",
-		fmt.Sprintf("%s; charset=%s", ContentTypeHTML, charSet))
+		fmt.Sprintf("%s; charset=%s", contentType, charSet))
 	return template{&htmlTemp, name, header}
 }
 
 // Text retruns a TemplateView witch uses text templates internally.
-func Text(name, charSet string) template {
+func Text(name, contentType, charSet string) template {
 	if textTemp.Template == nil {
 		panic("Function `InitTextTemplates` should be called first.")
 	}
+	if contentType == "" {
+		contentType = ContentTypePlain
+	}
+	if charSet == "" {
+		charSet = CharSetUTF8
+	}
 	header := make(http.Header)
 	header.Set("Content-Type",
-		fmt.Sprintf("%s; charset=%s", ContentTypePlain, charSet))
+		fmt.Sprintf("%s; charset=%s", contentType, charSet))
 	return template{&textTemp, name, header}
 }
 

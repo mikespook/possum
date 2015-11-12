@@ -2,7 +2,9 @@ package view
 
 import (
 	"io/ioutil"
+	"mime"
 	"net/http"
+	"path"
 )
 
 // PreloadFile returns the view which can preload static files and serve them.
@@ -17,7 +19,7 @@ func PreloadFile(filename string, contentType string) (preloadFile, error) {
 		return preloadFile{}, err
 	}
 	if contentType == "" {
-		contentType = ContentTypeBinary
+		contentType = mime.TypeByExtension(path.Ext(filename))
 	}
 	header := make(http.Header)
 	header.Set("Content-Type", contentType)
