@@ -2,6 +2,7 @@
 package possum
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 
@@ -72,13 +73,21 @@ func (mux *ServerMux) handleError(ctx *Context, err error) bool {
 }
 
 func (mux *ServerMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	ctx := newContext(w, req)
+	ctx := ctxPool.Get().(*Context)
+	ctx.Request = req
+	ctx.Response.Status = http.StatusOK
+	ctx.Response.ResponseWriter = w
+
 	p, h, v := mux.routers.Find(req.URL.Path)
 	if p != nil {
 		if ctx.Request.URL.RawQuery == "" {
 			ctx.Request.URL.RawQuery = p.Encode()
 		} else {
-			ctx.Request.URL.RawQuery = fmt.Sprintf("%s&%s", ctx.Request.URL.RawQuery, p.Encode())
+			var buf bytes.Buffer
+			buf.WriteString(ctx.Request.URL.RawQuery)
+			buf.WriteByte('&')
+			buf.WriteString(p.Encode())
+			ctx.Request.URL.RawQuery = buf.String()
 		}
 	}
 	if err := ctx.Request.ParseForm(); err != nil {
@@ -110,6 +119,7 @@ func (mux *ServerMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 		}
+		ctxPool.Put(ctx)
 	}()
 	if mux.PreRequest != nil {
 		if err := mux.PreRequest(ctx); mux.handleError(ctx, err) {

@@ -3,6 +3,7 @@ package possum
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/mikespook/possum/session"
 	"github.com/mikespook/possum/view"
@@ -66,13 +67,14 @@ func (ctx *Context) flush(v view.View) error {
 	return err
 }
 
-func newContext(w http.ResponseWriter, r *http.Request) *Context {
-	ctx := &Context{
-		Request: r,
-		Response: Response{
-			Status:         http.StatusOK,
-			ResponseWriter: w,
+var ctxPool *sync.Pool
+
+func init() {
+	ctxPool = &sync.Pool{
+		New: func() interface{} {
+			return &Context{
+				Response: Response{},
+			}
 		},
 	}
-	return ctx
 }
