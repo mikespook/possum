@@ -14,7 +14,7 @@ import (
 type HandlerFunc func(ctx *Context) error
 
 // ServeMux is an HTTP request multiplexer.
-type ServeMux struct {
+type ServerMux struct {
 	routers      *Routers
 	ErrorHandle  func(error)
 	PreRequest   HandlerFunc
@@ -32,16 +32,16 @@ var defaultNotFound = func(ctx *Context) error {
 }
 
 // NewServerMux returns a new Handler.
-func NewServerMux() (mux *ServeMux) {
+func NewServerMux() (mux *ServerMux) {
 	nf := struct {
 		View    view.View
 		Handler HandlerFunc
 	}{view.Simple(view.ContentTypePlain, view.CharSetUTF8), defaultNotFound}
-	return &ServeMux{NewRouters(), nil, nil, nil, nf}
+	return &ServerMux{NewRouters(), nil, nil, nil, nf}
 }
 
 // Internal error handler
-func (mux *ServeMux) err(err error) {
+func (mux *ServerMux) err(err error) {
 	if mux.ErrorHandle != nil {
 		mux.ErrorHandle(err)
 	}
@@ -49,12 +49,12 @@ func (mux *ServeMux) err(err error) {
 
 // HandleFunc specifies a pair of handler and view to handle
 // the request witch matching router.
-func (mux *ServeMux) HandleFunc(r router.Router, h HandlerFunc, v view.View) {
+func (mux *ServerMux) HandleFunc(r router.Router, h HandlerFunc, v view.View) {
 	mux.routers.Add(r, h, v)
 }
 
 // handleError tests the context `Error` and assign it to response.
-func (mux *ServeMux) handleError(ctx *Context, err error) bool {
+func (mux *ServerMux) handleError(ctx *Context, err error) bool {
 	if err == nil {
 		return false
 	}
@@ -71,7 +71,7 @@ func (mux *ServeMux) handleError(ctx *Context, err error) bool {
 	return true
 }
 
-func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (mux *ServerMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := newContext(w, req)
 	p, h, v := mux.routers.Find(req.URL.Path)
 	if p != nil {

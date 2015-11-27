@@ -15,7 +15,7 @@ import (
 
 // InitPProf registers pprof handlers to the ServeMux.
 // The pprof handlers can be specified a customized prefix.
-func (mux *ServeMux) InitPProf(prefix string) {
+func (mux *ServerMux) InitPProf(prefix string) {
 	if prefix == "" {
 		prefix = "/debug/pprof"
 	}

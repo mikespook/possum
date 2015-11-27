@@ -545,7 +545,7 @@ func calcMem(name string, load func()) {
 	println("   "+name+":", after-before, "Bytes")
 }
 
-func benchRequest(b *testing.B, router *ServeMux, r *http.Request) {
+func benchRequest(b *testing.B, router *ServerMux, r *http.Request) {
 	w := new(mockResponseWriter)
 	u := r.URL
 	rq := u.RawQuery
@@ -560,7 +560,7 @@ func benchRequest(b *testing.B, router *ServeMux, r *http.Request) {
 	}
 }
 
-func benchRoutes(b *testing.B, router *ServeMux, routes []route) {
+func benchRoutes(b *testing.B, router *ServerMux, routes []route) {
 	w := new(mockResponseWriter)
 	r, _ := http.NewRequest("GET", "/", nil)
 	u := r.URL
@@ -584,7 +584,7 @@ var (
 	// load functions of all routers
 	routers = []struct {
 		name string
-		load func(routes []route) *ServeMux
+		load func(routes []route) *ServerMux
 	}{
 		{"Possum", loadPossum},
 	}
@@ -639,10 +639,10 @@ const (
 )
 
 var (
-	githubPossum *ServeMux
-	gplusPossum  *ServeMux
-	parsePossum  *ServeMux
-	staticPossum *ServeMux
+	githubPossum *ServerMux
+	gplusPossum  *ServerMux
+	parsePossum  *ServerMux
+	staticPossum *ServerMux
 )
 
 func init() {
@@ -690,7 +690,7 @@ func possumHandler(c *Context) error {
 	return nil
 }
 
-func loadPossum(routes []route) *ServeMux {
+func loadPossum(routes []route) *ServerMux {
 	mux := NewServerMux()
 	for _, r := range routes {
 		mux.HandleFunc(router.Simple(r.path), possumHandler, view.Simple("text/html", "utf-8"))
@@ -698,7 +698,7 @@ func loadPossum(routes []route) *ServeMux {
 	return mux
 }
 
-func loadPossumSingle(method, path string, handler HandlerFunc) *ServeMux {
+func loadPossumSingle(method, path string, handler HandlerFunc) *ServerMux {
 	mux := NewServerMux()
 	mux.HandleFunc(router.Simple(path), handler, view.Simple("text/html", "utf-8"))
 	return mux
