@@ -62,7 +62,7 @@ func (mux *ServerMux) handleError(ctx *Context, err error) bool {
 	if e, ok := err.(Error); ok {
 		ctx.Response.Status = e.Status
 		ctx.Response.Data = e
-		return false
+		return true
 	}
 	if ctx.Response.Status == http.StatusOK {
 		ctx.Response.Status = http.StatusInternalServerError
