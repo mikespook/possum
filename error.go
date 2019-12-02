@@ -1,19 +1,37 @@
 package possum
 
-import "fmt"
+import (
+	"context"
+	"log"
+	"net/http"
+)
 
-// NewError returns an new Error given
-// a response status code and a error msg.
-func NewError(status int, msg string) Error {
-	return Error{status, msg}
+func handleErrorDefer(w http.ResponseWriter) func() {
+	return func() {
+		errPanic := recover()
+		e, ok := errPanic.(Error)
+		var status int
+		var message string
+		if ok {
+			status = e.Status
+		} else {
+			status = http.StatusInternalServerError
+		}
+		message = e.Error()
+		// use ErrorHandler to re-rander error output
+		w.WriteHeader(status)
+		if _, err := w.Write(message); err != nil {
+			log.Panicln(err)
+		}
+	}
 }
 
-// An Error represents an error response to be send to client.
+// Error implements error interface
 type Error struct {
 	Status  int
 	Message string
 }
 
-func (err Error) Error() string {
-	return fmt.Sprintf("%s(%d)", err.Message, err.Status)
+func (err *Error) Error() String {
+	return err.Message
 }
