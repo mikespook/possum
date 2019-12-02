@@ -1,67 +1,84 @@
 package possum
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/mikespook/possum/session"
 	"github.com/mikespook/possum/view"
 )
 
-// A Response represents an HTTP response status
-// and data to be send to client.
-type Response struct {
-	Status int
-	Data   interface{}
-	http.ResponseWriter
+const statusKey contextKey = "status"
+const datakey contextKey = "data"
+
+// Redirect performs a redirecting to the url.
+// It only works with the code belongs to one of StatusMovedPermanently,
+// StatusFound, StatusSeeOther, and StatusTemporaryRedirect.
+func Redirect(req *http.Request, code int, url string) {
+	ctx := context.WithValue(req.Context(), statusKey, code)
+	ctx = context.WithValue(req.Context(), dataKey, url)
+	req.WithContext(ctx)
 }
 
-// A Context contains a Request witch is processed by server handler,
-// a Response witch will be send to client
-// and a Session witch hold data belonging to a session.
-type Context struct {
-	Request  *http.Request
-	Response Response
-	Session  *session.Session
-}
-
-// Redirect performs a redirecting to the url, if the code belongs to
-// one of StatusMovedPermanently, StatusFound, StatusSeeOther, and
-// StatusTemporaryRedirect.
-func (ctx *Context) Redirect(code int, url string) {
-	ctx.Response.Status = code
-	ctx.Response.Data = url
-}
-
-func (ctx *Context) flush(v view.View) error {
-	if ctx.Session != nil {
-		if err := ctx.Session.Flush(); err != nil {
-			return err
-		}
+func handleRedirect(w http.ResponseWriter, req *http.Request) bool {
+	ctx := req.Context()
+	status := getStatus(ctx)
+	data := getData(ctx)
+	if status != http.StatusMovedPermanently &&
+		status != http.StatusFound &&
+		status != http.StatusSeeOther &&
+		status != http.StatusTemporaryRedirect {
+		return false
 	}
-	if ctx.Response.Status == http.StatusMovedPermanently ||
-		ctx.Response.Status == http.StatusFound ||
-		ctx.Response.Status == http.StatusSeeOther ||
-		ctx.Response.Status == http.StatusTemporaryRedirect {
-		if url, ok := ctx.Response.Data.(string); ok {
-			http.Redirect(ctx.Response, ctx.Request, url, ctx.Response.Status)
-			return nil
-		}
-		return NewError(http.StatusInternalServerError,
-			fmt.Sprintf("%T is not an URL.", ctx.Response.Data))
-	}
-	data, header, err := v.Render(ctx.Response.Data)
+	http.Redirect(w, req, data, status)
+	return true
+}
+
+func handleRender(w http.ResponseWriter, req *http.Request) bool {
+	ctx := req.Context()
+
+	status := getStatus(ctx)
+
+	data, header, err := v.Render(ctx.Value(dataKey))
 	if err != nil {
-		return err
+		setError(req, err)
+		return false
 	}
 	if header != nil {
-		for hk, hv := range header {
-			for _, cv := range hv {
-				ctx.Response.Header().Add(hk, cv)
+		for key, values := range header {
+			for _, value := range values {
+				w.Header().Add(key, value)
 			}
 		}
 	}
-	ctx.Response.WriteHeader(ctx.Response.Status)
-	_, err = ctx.Response.Write(data)
+	w.WriteHeader(status)
+	if _, err = w.Write(data); err != nil {
+		setError(req, err)
+		return false
+	}
+	return true
+}
+
+func getStatus(ctx context.Context) int {
+	status, ok := ctx.Value(statusKey).(int)
+	if !ok {
+		panic(Error{http.StatusInternalServerError, fmt.Sprintf("Type casting error, `int` expected, `%T` got.", ctx.Value(statusKey))})
+	}
+	return status
+}
+
+func getData(ctx context.Context) string {
+	data, ok := ctx.Value(dataKey).(string)
+	if !ok {
+		panic(Error{http.StatusInternalServerError, fmt.Sprintf("Type casting error, `string` expected, `%T` got.", ctx.Value(dataKey))})
+	}
+	return data
+}
+
+func getError(ctx context.Context) error {
+	err, ok := ctx.Value(errorKey).(error)
+	if !ok {
+		panic(Error{http.StatusInternalServerError, fmt.Sprintf("Type casting error, `error` expected, `%T` got.", ctx.Value(errorKey))})
+	}
 	return err
 }
