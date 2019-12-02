@@ -7,20 +7,19 @@ import (
 	"github.com/mikespook/possum/session"
 )
 
-// SessionName is the type of name for context
-type SessionName string
+type contextKey string
 
 const sessionCookieName = "possum"
-const sessionName SessionName = "session"
+const sessionKey contextKey = "session"
 
 // SessionFacotryFunc is the default factory function of session.
-var SessionFacotryFunc session.FactoryFunc = session.NewFactory(session.CookieStorage(sessionCookieName, nil))
+var SessionFacotryFunc = session.NewFactory(session.CookieStorage(sessionCookieName, nil))
 
 // Session extracts data from the request and returns session instance.
 // It uses SessionFacotryFunc to initialise session if no session has been set yet.
 func Session(w http.ResponseWriter, req *http.Request) (session *session.Session, err error) {
 	var ok bool
-	if session, ok = req.Context().Value(sessionName).(*Session); ok {
+	if session, ok = req.Context().Value(sessionKey).(*Session); ok {
 		return session, nil
 	}
 
@@ -28,6 +27,15 @@ func Session(w http.ResponseWriter, req *http.Request) (session *session.Session
 	if err != nil {
 		return nil, err
 	}
-	context.WithValue(req.Context(), sessionName, session)
+	req.WithContext(context.WithValue(req.Context(), sessionKey, session))
 	return session, nil
+}
+
+func handleSession(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	if session, ok := ctx.Value(sessionKey).(*Session); ok {
+		if err := session.Flush(); err != nil {
+			panic(Error{http.StatusInternalServerError, err.Error()})
+		}
+	}
 }
