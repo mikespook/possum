@@ -38,7 +38,7 @@ func NewRouters() *Routers {
 }
 
 // Add a router to list
-func (routers *Routers) Add(router router.Router, f HandlerFunc, view view.View) {
+func (routers *Routers) Add(router router.Router, f http.HandlerFunc, view view.View) {
 	defer routers.Unlock()
 	routers.Lock()
 	pack := &routerPack{router, view, f}
@@ -51,7 +51,7 @@ func (routers *Routers) Add(router router.Router, f HandlerFunc, view view.View)
 }
 
 // find a router with the specific path and return it.
-func (routers *Routers) find(path string) (url.Values, HandlerFunc, view.View) {
+func (routers *Routers) find(path string) (url.Values, http.HandlerFunc, view.View) {
 	defer routers.RUnlock()
 	routers.RLock()
 	if pack, ok := routers.direct[path]; ok {

@@ -19,7 +19,7 @@ func handleErrorDefer(w http.ResponseWriter) func() {
 		message = e.Error()
 		// use ErrorHandler to re-rander error output
 		w.WriteHeader(status)
-		if _, err := w.Write(message); err != nil {
+		if _, err := w.Write([]byte(message)); err != nil {
 			log.Panicln(err)
 		}
 	}
