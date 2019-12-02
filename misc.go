@@ -34,15 +34,14 @@ func handleRedirect(w http.ResponseWriter, req *http.Request) bool {
 	return true
 }
 
-func handleRender(w http.ResponseWriter, req *http.Request) bool {
+func handleRender(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	view := getView(ctx)
+	data := getData(ctx)
 
-	status := getStatus(ctx)
-
-	data, header, err := v.Render(ctx.Value(dataKey))
+	body, header, err := view.Render(data)
 	if err != nil {
-		setError(req, err)
-		return false
+		panic(Error{http.StatusInternalServerError, err.Error()})
 	}
 	if header != nil {
 		for key, values := range header {
@@ -52,11 +51,13 @@ func handleRender(w http.ResponseWriter, req *http.Request) bool {
 		}
 	}
 	w.WriteHeader(status)
-	if _, err = w.Write(data); err != nil {
-		setError(req, err)
-		return false
+	if _, err = w.Write(body); err != nil {
+		panic(Error{http.StatusInternalServerError, err.Error()})
 	}
-	return true
+}
+
+func setContextValue(key contextKey, value interface{}) {
+	req.WithContext(context.WithValue(req.Context(), key, value))
 }
 
 func getStatus(ctx context.Context) int {
@@ -75,10 +76,30 @@ func getData(ctx context.Context) string {
 	return data
 }
 
+func setData(req *http.Request, data interface{}) {
+	setContextValue(req, dataKey, data)
+}
+
 func getError(ctx context.Context) error {
 	err, ok := ctx.Value(errorKey).(error)
 	if !ok {
 		panic(Error{http.StatusInternalServerError, fmt.Sprintf("Type casting error, `error` expected, `%T` got.", ctx.Value(errorKey))})
 	}
 	return err
+}
+
+func getFunc(ctx context.Context) http.HandlerFunc {
+	f, ok := ctx.Value(funcKey).(http.HandlerFunc)
+	if !ok {
+		panic(Error{http.StatusInternalServerError, fmt.Sprintf("Type casting error, `http.HandlerFunc` expected, `%T` got.", ctx.Value(funcKey))})
+	}
+	return f
+}
+
+func getView(ctx context.Context) view.View {
+	view, ok := ctx.Value(viewKey).(view.View)
+	if !ok {
+		panic(Error{http.StatusInternalServerError, fmt.Sprintf("Type casting error, `view.View` expected, `%T` got.", ctx.Value(viewKey))})
+	}
+	return view
 }

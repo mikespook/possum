@@ -27,7 +27,7 @@ func Session(w http.ResponseWriter, req *http.Request) (session *session.Session
 	if err != nil {
 		return nil, err
 	}
-	req.WithContext(context.WithValue(req.Context(), sessionKey, session))
+	setContextValue(req, sessionKey, session)
 	return session, nil
 }
 
