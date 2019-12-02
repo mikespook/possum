@@ -22,7 +22,7 @@ func Colon(path string) *colon {
 func (c *colon) Match(path string) (url.Values, bool) {
 	matches := strings.Split(path, "/")
 	i := 0
-	params := make(url.Values)
+	params := url.Values{}
 	var resKey, resValue string
 	for _, v := range c.matches {
 		if v != "" && v[0] == ':' {

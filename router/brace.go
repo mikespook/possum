@@ -22,7 +22,7 @@ func Brace(path string) *brace {
 func (b *brace) Match(path string) (url.Values, bool) {
 	matches := strings.Split(path, "/")
 	i := 0
-	params := make(url.Values)
+	params := url.Values{}
 	var resKey, resValue string
 	for _, v := range b.matches {
 		if v != "" && v[0] == '{' && v[len(v)-1] == '}' {
