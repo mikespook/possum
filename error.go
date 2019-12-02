@@ -1,7 +1,6 @@
 package possum
 
 import (
-	"context"
 	"log"
 	"net/http"
 )
@@ -32,6 +31,6 @@ type Error struct {
 	Message string
 }
 
-func (err *Error) Error() String {
+func (err *Error) Error() string {
 	return err.Message
 }
