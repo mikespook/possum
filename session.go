@@ -1,7 +1,6 @@
 package possum
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/mikespook/possum/session"
