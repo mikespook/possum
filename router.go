@@ -3,7 +3,6 @@ package possum
 import (
 	"container/list"
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"sync"
@@ -27,7 +26,7 @@ type Routers struct {
 type routerPack struct {
 	router router.Router
 	view   view.View
-	f      HandlerFunc
+	f      http.HandlerFunc
 }
 
 // NewRouters initailizes Routers instance.
