@@ -55,21 +55,21 @@ const tplDir = `<!DOCTYPE html>
 </html>`
 
 func newStaticHandle(dir, autoindex string) possum.HandlerFunc {
-	return func(ctx *possum.Context) error {
-		f := path.Join(dir, ctx.Request.URL.Path)
+	return func(w http.ResponseWriter, req *http.Request) (data interface{}, statusCode int) {
+		f := path.Join(dir, req.URL.Path)
 		fi, err := os.Stat(f)
 		if err != nil {
 			switch {
 			case os.IsNotExist(err):
-				ctx.Response.Status = http.StatusNotFound
-				ctx.Response.Data = fmt.Sprintf("File Not Found: %s", f)
+				statusCode = http.StatusNotFound
+				data = fmt.Sprintf("File Not Found: %s", f)
 			case os.IsPermission(err):
-				ctx.Response.Status = http.StatusForbidden
-				ctx.Response.Data = fmt.Sprintf("Access Forbidden: %s", f)
+				statusCode = http.StatusForbidden
+				data = fmt.Sprintf("Access Forbidden: %s", f)
 			default:
-				return err
+				statusCode = http.StatusInternalServerError
 			}
-			return nil
+			return
 		}
 		if fi.IsDir() {
 			if autoindex != "" {
@@ -81,11 +81,11 @@ func newStaticHandle(dir, autoindex string) possum.HandlerFunc {
 			}
 			fis, err := ioutil.ReadDir(f)
 			if err != nil {
-				return err
+				return err, http.StatusInternalServerError
 			}
 			t, err := template.New("static").Parse(tplDir)
 			var buf bytes.Buffer
-			current := path.Clean(ctx.Request.URL.Path)
+			current := path.Clean(req.URL.Path)
 			if current == "/" {
 				current = ""
 			}
@@ -95,24 +95,24 @@ func newStaticHandle(dir, autoindex string) possum.HandlerFunc {
 				"list":    fis,
 			})
 			if err != nil {
-				return err
+				return err, http.StatusInternalServerError
 			}
-			ctx.Response.Data = viewData{
+			data = viewData{
 				contentType: view.ContentTypeHTML,
 				body:        buf.Bytes(),
 			}
-			return nil
+			return data, http.StatusOK
 		}
 	F:
 		body, err := ioutil.ReadFile(f)
 		if err != nil {
-			return err
+			return err, http.StatusInternalServerError
 		}
-		ctx.Response.Data = viewData{
+		data = viewData{
 			contentType: mime.TypeByExtension(path.Ext(f)),
 			body:        body,
 		}
-		return nil
+		return data, http.StatusOK
 	}
 }
 

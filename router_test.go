@@ -1,7 +1,6 @@
 package possum
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -545,7 +544,7 @@ func calcMem(name string, load func()) {
 	println("   "+name+":", after-before, "Bytes")
 }
 
-func benchRequest(b *testing.B, router *ServerMux, r *http.Request) {
+func benchRequest(b *testing.B, psm *Possum, r *http.Request) {
 	w := new(mockResponseWriter)
 	u := r.URL
 	rq := u.RawQuery
@@ -556,11 +555,11 @@ func benchRequest(b *testing.B, router *ServerMux, r *http.Request) {
 
 	for i := 0; i < b.N; i++ {
 		u.RawQuery = rq
-		router.ServeHTTP(w, r)
+		psm.ServeHTTP(w, r)
 	}
 }
 
-func benchRoutes(b *testing.B, router *ServerMux, routes []route) {
+func benchRoutes(b *testing.B, psm *Possum, routes []route) {
 	w := new(mockResponseWriter)
 	r, _ := http.NewRequest("GET", "/", nil)
 	u := r.URL
@@ -575,7 +574,7 @@ func benchRoutes(b *testing.B, router *ServerMux, routes []route) {
 			r.RequestURI = route.path
 			u.Path = route.path
 			u.RawQuery = rq
-			router.ServeHTTP(w, r)
+			psm.ServeHTTP(w, r)
 		}
 	}
 }
@@ -584,7 +583,7 @@ var (
 	// load functions of all routers
 	routers = []struct {
 		name string
-		load func(routes []route) *ServerMux
+		load func(routes []route) *Possum
 	}{
 		{"Possum", loadPossum},
 	}
@@ -639,10 +638,10 @@ const (
 )
 
 var (
-	githubPossum *ServerMux
-	gplusPossum  *ServerMux
-	parsePossum  *ServerMux
-	staticPossum *ServerMux
+	githubPossum *Possum
+	gplusPossum  *Possum
+	parsePossum  *Possum
+	staticPossum *Possum
 )
 
 func init() {
@@ -680,27 +679,26 @@ func init() {
 }
 
 // Possum
-func possumHandlerWrite(c *Context) error {
-	io.WriteString(c.Response, c.Request.URL.Query().Get("name"))
-	return nil
+func possumHandlerWrite(w http.ResponseWriter, req *http.Request) (interface{}, int) {
+	name := req.URL.Query().Get("name")
+	return name, http.StatusOK
 }
 
-func possumHandler(c *Context) error {
-	io.WriteString(c.Response, c.Request.RequestURI)
-	return nil
+func possumHandler(w http.ResponseWriter, req *http.Request) (interface{}, int) {
+	return req.RequestURI, http.StatusOK
 }
 
-func loadPossum(routes []route) *ServerMux {
-	mux := NewServerMux()
+func loadPossum(routes []route) *Possum {
+	mux := New()
 	for _, r := range routes {
-		mux.HandleFunc(router.Simple(r.path), possumHandler, view.Simple("text/html", "utf-8"))
+		mux.Add(router.Simple(r.path), possumHandler, view.Simple("text/html", "utf-8"))
 	}
 	return mux
 }
 
-func loadPossumSingle(method, path string, handler HandlerFunc) *ServerMux {
-	mux := NewServerMux()
-	mux.HandleFunc(router.Simple(path), handler, view.Simple("text/html", "utf-8"))
+func loadPossumSingle(method, path string, handler HandlerFunc) *Possum {
+	mux := New()
+	mux.Add(router.Simple(path), handler, view.Simple("text/html", "utf-8"))
 	return mux
 }
 

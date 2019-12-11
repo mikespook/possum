@@ -28,16 +28,13 @@ func main() {
 		dir = "."
 	}
 
-	mux := possum.NewServerMux()
-	mux.HandleFunc(staticRouter{}, newStaticHandle(dir, autoindex), staticView{})
+	mux := possum.New()
+	mux.Add(staticRouter{}, newStaticHandle(dir, autoindex), staticView{})
 	mux.ErrorHandle = func(err error) {
 		log.Error(err)
 	}
-	mux.PostResponse = func(ctx *possum.Context) error {
-		log.Debugf("[%d] %s:%s \"%s\"", ctx.Response.Status,
-			ctx.Request.RemoteAddr, ctx.Request.Method,
-			ctx.Request.URL.String())
-		return nil
+	mux.PreResponse = func(w http.ResponseWriter, req *http.Request) {
+		log.Debugf("%s:%s \"%s\"", req.RemoteAddr, req.Method, req.URL.String())
 	}
 	log.Messagef("Addr: %s", addr)
 	go func() {
