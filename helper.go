@@ -3,60 +3,34 @@ package possum
 import (
 	"math/rand"
 	"net/http"
-
-	"golang.org/x/net/websocket"
 )
 
 // Method takes one map as a paramater.
 // Keys of this map are HTTP method mapping to HandlerFunc(s).
 func Method(m map[string]HandlerFunc) HandlerFunc {
-	f := func(ctx *Context) error {
-		h, ok := m[ctx.Request.Method]
+	return func(w http.ResponseWriter, req *http.Request) (interface{}, int) {
+		h, ok := m[req.Method]
 		if ok {
-			return h(ctx)
+			return h(w, req)
 		}
-		ctx.Response.Status = http.StatusMethodNotAllowed
-		return nil
+		return errMethodNotAllowed, http.StatusMethodNotAllowed
 	}
-	return f
 }
 
-// Chain combins a slide of HandlerFunc(s) in to one request.
+// Chain combins a slide of HandlerFunc(s) in to one request. TODO
 func Chain(h ...HandlerFunc) HandlerFunc {
-	f := func(ctx *Context) error {
+	f := func(w http.ResponseWriter, req *http.Request) (data interface{}, status int) {
 		for _, v := range h {
-			if err := v(ctx); err != nil {
-				return err
-			}
+			data, status = v(w, req)
 		}
-		return nil
+		return data, status
 	}
 	return f
 }
 
 // Rand picks one HandlerFunc(s) in the slide.
 func Rand(h ...HandlerFunc) HandlerFunc {
-	f := func(ctx *Context) error {
-		if err := h[rand.Intn(len(h))](ctx); err != nil {
-			return err
-		}
-		return nil
+	return func(w http.ResponseWriter, req *http.Request) (interface{}, int) {
+		return h[rand.Intn(len(h))](w, req)
 	}
-	return f
-}
-
-// WrapHTTPHandlerFunc wraps http.HandlerFunc in possum.HandlerFunc.
-// See pprof.go.
-func WrapHTTPHandlerFunc(f http.HandlerFunc) HandlerFunc {
-	newF := func(ctx *Context) error {
-		f(ctx.Response, ctx.Request)
-		return nil
-	}
-	return newF
-}
-
-// WebSocketHandlerFunc convert websocket function to possum.HandlerFunc.
-func WebSocketHandlerFunc(f func(ws *websocket.Conn)) HandlerFunc {
-	h := websocket.Handler(f)
-	return WrapHTTPHandlerFunc(h.ServeHTTP)
 }

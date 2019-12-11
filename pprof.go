@@ -2,7 +2,6 @@ package possum
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/pprof"
 	rpprof "runtime/pprof"
@@ -15,18 +14,21 @@ import (
 
 // InitPProf registers pprof handlers to the ServeMux.
 // The pprof handlers can be specified a customized prefix.
-func (mux *ServerMux) InitPProf(prefix string) {
+func InitPProf(psm *Possum, prefix string) {
 	if prefix == "" {
 		prefix = "/debug/pprof"
 	}
-	mux.HandleFunc(router.Wildcard(fmt.Sprintf("%s/*", prefix)),
-		WrapHTTPHandlerFunc(pprofIndex(prefix)), nil)
-	mux.HandleFunc(router.Simple(fmt.Sprintf("%s/cmdline", prefix)),
-		WrapHTTPHandlerFunc(http.HandlerFunc(pprof.Cmdline)), nil)
-	mux.HandleFunc(router.Simple(fmt.Sprintf("%s/profile", prefix)),
-		WrapHTTPHandlerFunc(http.HandlerFunc(pprof.Profile)), nil)
-	mux.HandleFunc(router.Simple(fmt.Sprintf("%s/symbol", prefix)),
-		WrapHTTPHandlerFunc(http.HandlerFunc(pprof.Symbol)), nil)
+	psm.Add(router.Wildcard(fmt.Sprintf("%s/*", prefix)), pprofIndex(prefix), nil)
+	psm.Add(router.Simple(fmt.Sprintf("%s/cmdline", prefix)), convHandlerFunc(pprof.Cmdline), nil)
+	psm.Add(router.Simple(fmt.Sprintf("%s/profile", prefix)), convHandlerFunc(pprof.Profile), nil)
+	psm.Add(router.Simple(fmt.Sprintf("%s/symbol", prefix)), convHandlerFunc(pprof.Symbol), nil)
+}
+
+func convHandlerFunc(f http.HandlerFunc) HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) (interface{}, int) {
+		f(w, req)
+		return nil, http.StatusOK
+	}
 }
 
 const pprofTemp = `<html>
@@ -54,12 +56,12 @@ h1 {border-bottom: 5px solid black;}
 </html>
 `
 
-func pprofIndex(prefix string) http.HandlerFunc {
+func pprofIndex(prefix string) HandlerFunc {
 	var indexTmpl = template.Must(template.New("index").Parse(fmt.Sprintf(pprofTemp, prefix)))
 	if prefix[len(prefix)-1] != '/' {
 		prefix = fmt.Sprintf("%s/", prefix)
 	}
-	f := func(w http.ResponseWriter, r *http.Request) {
+	f := func(w http.ResponseWriter, r *http.Request) (interface{}, int) {
 		if strings.HasPrefix(r.URL.Path, prefix) {
 			name := strings.TrimPrefix(r.URL.Path, prefix)
 			if name != "" {
@@ -67,18 +69,17 @@ func pprofIndex(prefix string) http.HandlerFunc {
 				debug, _ := strconv.Atoi(r.FormValue("debug"))
 				p := rpprof.Lookup(string(name))
 				if p == nil {
-					w.WriteHeader(404)
-					fmt.Fprintf(w, "Unknown profile: %s\n", name)
-					return
+					return fmt.Sprintf("Unknown profile: %s\n", name), http.StatusNotFound
 				}
 				p.WriteTo(w, debug)
-				return
+				return nil, http.StatusOK
 			}
 		}
 		profiles := rpprof.Profiles()
 		if err := indexTmpl.Execute(w, profiles); err != nil {
-			log.Print(err)
+			return err, http.StatusInternalServerError
 		}
+		return nil, http.StatusOK
 	}
 	return f
 }

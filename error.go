@@ -1,27 +1,29 @@
 package possum
 
 import (
+	"errors"
 	"log"
 	"net/http"
 )
 
-func handleErrorDefer(w http.ResponseWriter) func() {
-	return func() {
-		errPanic := recover()
-		e, ok := errPanic.(Error)
-		var status int
-		var message string
-		if ok {
-			status = e.Status
-		} else {
-			status = http.StatusInternalServerError
-		}
-		message = e.Error()
-		// use ErrorHandler to re-rander error output
-		w.WriteHeader(status)
-		if _, err := w.Write([]byte(message)); err != nil {
-			log.Panicln(err)
-		}
+var (
+	errMethodNotAllowed = errors.New("possum: method not allowed")
+)
+
+func handleError(w http.ResponseWriter, errPanic error) {
+	e, ok := errPanic.(Error)
+	var status int
+	var message string
+	if ok {
+		status = e.Status
+	} else {
+		status = http.StatusInternalServerError
+	}
+	message = e.Error()
+	// use ErrorHandler to re-rander error output
+	w.WriteHeader(status)
+	if _, err := w.Write([]byte(message)); err != nil {
+		log.Panicln(err)
 	}
 }
 
@@ -31,6 +33,6 @@ type Error struct {
 	Message string
 }
 
-func (err *Error) Error() string {
+func (err Error) Error() string {
 	return err.Message
 }
