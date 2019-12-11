@@ -13,10 +13,14 @@ var SessionFacotryFunc = session.NewFactory(session.CookieStorage(sessionCookieN
 
 // Session extracts data from the request and returns session instance.
 // It uses SessionFacotryFunc to initialise session if no session has been set yet.
-func Session(w http.ResponseWriter, req *http.Request) (sn *session.Session, err error) {
+func Session(w http.ResponseWriter, req *http.Request) (sn *session.Session, deferFunc func(), err error) {
 	sn, err = SessionFacotryFunc(w, req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return sn, nil
+	return sn, func() {
+		if err := sn.Flush(); err != nil {
+			panic(err)
+		}
+	}, nil
 }
