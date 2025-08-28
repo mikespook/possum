@@ -168,6 +168,36 @@ Pay special attention to:
 - Resource management patterns
 ```
 
+## Update README.md
+
+Use this prompt when the README.md file needs to be created or updated:
+
+```
+Review the Go project and create or update the README.md file to serve as a human-friendly introduction to the project. The README should be concise but informative, providing essential information without being overwhelming. Include:
+
+1. Project name and brief description (1-2 sentences)
+2. Key features (bullet points)
+3. Installation instructions
+4. Quick start example (a simple but complete working example)
+5. Core components overview (brief descriptions)
+6. Links to detailed documentation files
+7. Testing information
+8. Dependencies list with purposes
+9. License information
+
+Ensure the README:
+- Is approachable for newcomers
+- Accurately reflects the current API
+- Contains working code examples
+- Uses clear, simple language
+- Is well-organized with appropriate headings
+- Is not too long (aim for scannable content)
+- Includes only the most important information
+- Has up-to-date installation and usage instructions
+
+Review the existing README.md and update it to match the current implementation. If it doesn't exist, create it following this structure.
+```
+
 ## Usage Instructions
 
 To use these prompts effectively:
