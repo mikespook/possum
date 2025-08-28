@@ -59,8 +59,6 @@ func main() {
 
 For comprehensive documentation, please refer to:
 - [LLM_CODER_GUIDE.md](LLM_CODER_GUIDE.md) - Complete guide for developers and AI models
-- [API.md](API.md) - Detailed API documentation
-- [STRUCTURE.md](STRUCTURE.md) - Project structure and organization
 
 ## Testing
 
@@ -76,12 +74,17 @@ Or manually:
 go test -v ./...
 ```
 
+Test coverage can be checked with:
+```bash
+go test -cover ./...
+```
+
 ## Dependencies
 
-- [github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt) - JWT implementation
-- [github.com/google/uuid](https://github.com/google/uuid) - UUID generation
-- [github.com/gorilla/websocket](https://github.com/gorilla/websocket) - WebSocket implementation
-- [github.com/rs/zerolog](https://github.com/rs/zerolog) - Structured logging
+- [github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt) v5.3.0 - JWT implementation
+- [github.com/google/uuid](https://github.com/google/uuid) v1.6.0 - UUID generation
+- [github.com/gorilla/websocket](https://github.com/gorilla/websocket) v1.5.3 - WebSocket implementation
+- [github.com/rs/zerolog](https://github.com/rs/zerolog) v1.34.0 - Structured logging
 
 ## License
 
