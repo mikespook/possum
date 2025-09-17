@@ -38,7 +38,7 @@ func TestWebSocketUpgrade(t *testing.T) {
 		{
 			name: "Custom config with allowed origin",
 			corsConfig: &CORSConfig{
-				AllowedOrigins: []string{"http://allowed.com"},
+				AllowOrigin: "http://allowed.com",
 			},
 			isDev:         false,
 			origin:        "http://allowed.com",
@@ -56,7 +56,7 @@ func TestWebSocketUpgrade(t *testing.T) {
 		{
 			name: "Custom config with disallowed origin",
 			corsConfig: &CORSConfig{
-				AllowedOrigins: []string{"http://allowed.com"},
+				AllowOrigin: "http://allowed.com",
 			},
 			isDev:         false,
 			origin:        "http://disallowed.com",
@@ -82,13 +82,16 @@ func TestWebSocketUpgrade(t *testing.T) {
 					if tc.corsConfig.AllowOrigin == "*" {
 						return true
 					}
-					if len(tc.corsConfig.AllowedOrigins) == 0 {
+					if tc.corsConfig.AllowOrigin == "" {
 						return true
 					}
-					for _, allowed := range tc.corsConfig.AllowedOrigins {
-						if allowed == "*" || allowed == origin {
-							return true
-						}
+					// Exact match
+					if tc.corsConfig.AllowOrigin == origin {
+						return true
+					}
+					// Substring match
+					if strings.Contains(origin, tc.corsConfig.AllowOrigin) {
+						return true
 					}
 					return false
 				}

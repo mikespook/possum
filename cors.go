@@ -6,9 +6,7 @@ import (
 )
 
 type CORSConfig struct {
-	AllowOrigin    string   `mapstructure:"allow_origin,omitempty"`
-	AllowedOrigins []string `mapstructure:"allowed_origins,omitempty"`
-
+	AllowOrigin      string   `mapstructure:"allow_origin,omitempty"`
 	AllowMethods     string   `mapstructure:"allow_methods,omitempty"`
 	AllowHeaders     string   `mapstructure:"allow_headers,omitempty"`
 	AllowCredentials bool     `mapstructure:"allow_credentials,omitempty"`
@@ -45,79 +43,80 @@ func init() {
 	defaultCORSConfig.Init()
 }
 
-// isOriginAllowed checks if the request origin is allowed based on CORS configuration.
-func isOriginAllowed(config *CORSConfig, origin string) bool {
-	if origin == "" {
-		return false
-	}
-
-	// 如果配置了 "*" 且不允许 credentials，直接返回true
-	if config.AllowOrigin == "*" && !config.AllowCredentials {
-		return true
-	}
-
-	// 检查具体的源
-	for _, allowed := range config.AllowedOrigins {
-		if allowed == origin {
-			return true
-		}
-	}
-	return false
+func SetDefaultCORSConfig(config *CORSConfig) {
+	defaultCORSConfig = config
 }
 
-// Cors is a middleware that handles Cross-Origin Resource Sharing (CORS) headers for HTTP requests.
-func Cors(config *CORSConfig, next http.HandlerFunc) http.HandlerFunc {
+// Cors returns a middleware that handles Cross-Origin Resource Sharing (CORS) headers for HTTP requests.
+// When used with the Chain function, it should be called as Cors() to return the middleware.
+func Cors(config *CORSConfig) HandlerFunc {
 	if config == nil {
 		config = defaultCORSConfig
 	}
-	return func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return corsHandler(config, next)
+	}
+}
 
-		// 处理源
-		if origin != "" {
-			if isOriginAllowed(config, origin) {
-				// 当允许credentials时，必须设置具体的源而不是 "*"
+// CorsHandler is the default CORS middleware that uses the default configuration.
+// This can be used directly as CorsHandler(next) or as Cors(nil) when chaining.
+func CorsHandler(next http.HandlerFunc) http.HandlerFunc {
+	return corsHandler(defaultCORSConfig, next)
+}
+
+// corsHandler is the actual CORS middleware implementation.
+func corsHandler(config *CORSConfig, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		if config.AllowOrigin != "" {
+			origin := r.Header.Get("Origin")
+			// When allowing credentials, we must set the specific origin rather than "*" if origin is provided
+			if config.AllowCredentials && config.AllowOrigin == "*" && origin != "" {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 			} else {
-				// 默认配置下，允许所有源
-				w.Header().Set("Access-Control-Allow-Origin", "*")
+				w.Header().Set("Access-Control-Allow-Origin", config.AllowOrigin)
 			}
-			w.Header().Set("Vary", "Origin")
+			// Add Vary header when we have a specific origin pattern
+			if config.AllowOrigin != "*" {
+				w.Header().Set("Vary", "Origin")
+			}
+		} else {
+			w.Header().Set("Access-Control-Allow-Origin", "null")
 		}
 
-		// 处理方法
-		if config.AllowMethods != "" {
-			w.Header().Set("Access-Control-Allow-Methods", config.AllowMethods)
-		}
-
-		// 处理头部
-		if config.AllowHeaders != "" {
-			w.Header().Set("Access-Control-Allow-Headers", config.AllowHeaders)
-		}
-
-		// 处理暴露的头部
-		if config.ExposeHeaders != "" {
-			w.Header().Set("Access-Control-Expose-Headers", config.ExposeHeaders)
-		}
-
-		// 处理缓存时间
-		if config.MaxAge > 0 {
-			w.Header().Set("Access-Control-Max-Age", strconv.Itoa(config.MaxAge))
-		}
-
-		// 处理credentials
+		// Handle credentials
 		if config.AllowCredentials {
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 
-		// 处理WebSocket升级请求
+		// Handle methods
+		if config.AllowMethods != "" {
+			w.Header().Set("Access-Control-Allow-Methods", config.AllowMethods)
+		}
+
+		// Handle headers
+		if config.AllowHeaders != "" {
+			w.Header().Set("Access-Control-Allow-Headers", config.AllowHeaders)
+		}
+
+		// Handle exposed headers
+		if config.ExposeHeaders != "" {
+			w.Header().Set("Access-Control-Expose-Headers", config.ExposeHeaders)
+		}
+
+		// Handle max age
+		if config.MaxAge > 0 {
+			w.Header().Set("Access-Control-Max-Age", strconv.Itoa(config.MaxAge))
+		}
+
+		// Handle WebSocket upgrade requests
 		if r.Header.Get("Upgrade") == "websocket" {
-			// 确保WebSocket请求允许的头部包含必要的WebSocket头部
+			// Ensure WebSocket requests allow necessary WebSocket headers
 			w.Header().Set("Access-Control-Allow-Headers",
 				config.AllowHeaders+", Sec-WebSocket-Key, Sec-WebSocket-Protocol, Sec-WebSocket-Version")
 		}
 
-		// 处理预检请求
+		// Handle preflight requests
 		if config.SkipMethod(r.Method) {
 			w.WriteHeader(http.StatusOK)
 			return

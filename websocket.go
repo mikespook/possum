@@ -2,6 +2,7 @@ package possum
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -49,14 +50,16 @@ func WebSocketUpgrade(corsConfig *CORSConfig, next WebsocketHandlerFunc) http.Ha
 			if corsConfig.AllowOrigin == "*" {
 				return true // 如果允许所有源，直接返回true
 			}
-			if len(corsConfig.AllowedOrigins) == 0 {
-				return true // 如果没有配置具体的允许源，默认允许
+			if corsConfig.AllowOrigin == "" {
+				return false // 如果没有配置具体的允许源，默认允许
 			}
-			// 检查origin是否在允许的列表中
-			for _, allowed := range corsConfig.AllowedOrigins {
-				if allowed == "*" || allowed == origin {
-					return true
-				}
+			// 检查origin是否匹配AllowOrigin（精确匹配或子字符串匹配）
+			if corsConfig.AllowOrigin == origin {
+				return true
+			}
+			// 子字符串匹配 - check if AllowOrigin is a substring of origin
+			if strings.Contains(origin, corsConfig.AllowOrigin) {
+				return true
 			}
 			return false
 		}

@@ -60,75 +60,8 @@ func TestCORSConfigInit(t *testing.T) {
 
 			// Verify result
 			if result != tc.expectedResult {
-				t.Errorf("Expected SkipMethod(%s) to be %v, got %v", 
+				t.Errorf("Expected SkipMethod(%s) to be %v, got %v",
 					tc.methodToCheck, tc.expectedResult, result)
-			}
-		})
-	}
-}
-
-// TestIsOriginAllowed tests the isOriginAllowed function for validating request origins against CORS rules.
-func TestIsOriginAllowed(t *testing.T) {
-	// Test cases
-	tests := []struct {
-		name           string
-		config         *CORSConfig
-		origin         string
-		expectedResult bool
-	}{
-		{
-			name: "Empty origin",
-			config: &CORSConfig{
-				AllowOrigin: "*",
-			},
-			origin:         "",
-			expectedResult: false,
-		},
-		{
-			name: "Wildcard allow origin without credentials",
-			config: &CORSConfig{
-				AllowOrigin:      "*",
-				AllowCredentials: false,
-			},
-			origin:         "http://example.com",
-			expectedResult: true,
-		},
-		{
-			name: "Wildcard allow origin with credentials",
-			config: &CORSConfig{
-				AllowOrigin:      "*",
-				AllowCredentials: true,
-			},
-			origin:         "http://example.com",
-			expectedResult: false,
-		},
-		{
-			name: "Specific origin in allowed list",
-			config: &CORSConfig{
-				AllowedOrigins: []string{"http://example.com", "http://test.com"},
-			},
-			origin:         "http://example.com",
-			expectedResult: true,
-		},
-		{
-			name: "Origin not in allowed list",
-			config: &CORSConfig{
-				AllowedOrigins: []string{"http://example.com", "http://test.com"},
-			},
-			origin:         "http://other.com",
-			expectedResult: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			// Test the function
-			result := isOriginAllowed(tc.config, tc.origin)
-
-			// Verify result
-			if result != tc.expectedResult {
-				t.Errorf("Expected isOriginAllowed to be %v, got %v", 
-					tc.expectedResult, result)
 			}
 		})
 	}
@@ -158,12 +91,11 @@ func TestCors(t *testing.T) {
 			origin:         "http://example.com",
 			expectedStatus: http.StatusOK,
 			expectedHeaders: map[string]string{
-				"Access-Control-Allow-Origin":      "*",
+				"Access-Control-Allow-Origin":      "http://example.com", // With credentials and *, we use the actual origin
 				"Access-Control-Allow-Methods":     "*",
 				"Access-Control-Allow-Headers":     "*",
 				"Access-Control-Allow-Credentials": "true",
 				"Access-Control-Expose-Headers":    "*",
-				"Vary":                             "Origin",
 			},
 			expectedHeadersSet: true,
 		},
@@ -171,7 +103,6 @@ func TestCors(t *testing.T) {
 			name: "Custom config with GET method",
 			config: &CORSConfig{
 				AllowOrigin:      "http://allowed.com",
-				AllowedOrigins:   []string{"http://allowed.com"},
 				AllowMethods:     "GET, POST",
 				AllowHeaders:     "Content-Type, Authorization",
 				AllowCredentials: true,
@@ -196,9 +127,9 @@ func TestCors(t *testing.T) {
 		{
 			name: "Origin not allowed",
 			config: &CORSConfig{
-				AllowedOrigins: []string{"http://allowed.com"},
-				AllowMethods:   "GET, POST",
-				ExemptMethods:  []string{"OPTIONS"},
+				AllowOrigin:   "http://allowed.com",
+				AllowMethods:  "GET, POST",
+				ExemptMethods: []string{"OPTIONS"},
 			},
 			method:             "GET",
 			origin:             "http://notallowed.com",
@@ -208,17 +139,16 @@ func TestCors(t *testing.T) {
 		{
 			name: "WebSocket upgrade request",
 			config: &CORSConfig{
-				AllowOrigin:    "*",
-				AllowHeaders:   "Content-Type",
-				ExemptMethods:  []string{"OPTIONS"},
+				AllowOrigin:   "*",
+				AllowHeaders:  "Content-Type",
+				ExemptMethods: []string{"OPTIONS"},
 			},
 			method:         "GET",
 			origin:         "http://example.com",
 			expectedStatus: http.StatusOK,
 			expectedHeaders: map[string]string{
-				"Access-Control-Allow-Origin":  "http://example.com",
+				"Access-Control-Allow-Origin":  "*", // With *, we keep the *
 				"Access-Control-Allow-Headers": "Content-Type, Sec-WebSocket-Key, Sec-WebSocket-Protocol, Sec-WebSocket-Version",
-				"Vary":                         "Origin",
 			},
 			expectedHeadersSet: true,
 		},
@@ -236,7 +166,7 @@ func TestCors(t *testing.T) {
 			if tc.origin != "" {
 				req.Header.Set("Origin", tc.origin)
 			}
-			
+
 			// For WebSocket test
 			if tc.name == "WebSocket upgrade request" {
 				req.Header.Set("Upgrade", "websocket")
@@ -245,8 +175,13 @@ func TestCors(t *testing.T) {
 			// Create a response recorder
 			rr := httptest.NewRecorder()
 
+			// Only set the config if it's not nil, otherwise use the default
+			if tc.config != nil {
+				SetDefaultCORSConfig(tc.config)
+			}
+
 			// Create the CORS middleware
-			handler := Cors(tc.config, mockHandler)
+			handler := CorsHandler(mockHandler)
 
 			// Call the handler
 			handler.ServeHTTP(rr, req)
@@ -261,7 +196,7 @@ func TestCors(t *testing.T) {
 				for key, expectedValue := range tc.expectedHeaders {
 					actualValue := rr.Header().Get(key)
 					if actualValue != expectedValue {
-						t.Errorf("Expected header %s to be %s, got %s", 
+						t.Errorf("Expected header %s to be %s, got %s",
 							key, expectedValue, actualValue)
 					}
 				}
