@@ -5,7 +5,7 @@ Possum is a lightweight, modular Go package that provides essential HTTP middlew
 ## Key Features
 
 - **Authentication**: JWT-based authentication for HTTP and WebSocket connections
-- **CORS Handling**: Comprehensive Cross-Origin Resource Sharing support
+- **CORS Handling**: Comprehensive Cross-Origin Resource Sharing support with substring origin matching
 - **Logging**: Structured request/response logging with zerolog
 - **Method Filtering**: Allow or deny specific HTTP methods
 - **WebSocket Support**: WebSocket upgrade handler with connection management
@@ -49,7 +49,7 @@ func main() {
 
 1. **Middleware Chain** - Compose multiple middleware handlers into a single handler
 2. **Authentication** - JWT-based authentication for both HTTP and WebSocket connections
-3. **CORS Handling** - Cross-Origin Resource Sharing middleware with configurable policies
+3. **CORS Handling** - Cross-Origin Resource Sharing middleware with configurable policies and substring origin matching
 4. **Logging** - Structured request/response logging using zerolog
 5. **Method Filtering** - Allow or deny specific HTTP methods
 6. **WebSocket Support** - WebSocket upgrade handler with built-in connection management

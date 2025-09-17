@@ -130,12 +130,12 @@ Middleware is applied in reverse order, meaning the first middleware in the list
 
 ### CORS
 
-The `cors` package implements Cross-Origin Resource Sharing middleware with comprehensive configuration options.
+The `cors` package implements Cross-Origin Resource Sharing middleware with comprehensive configuration options and substring origin matching.
 
 **Key Features:**
 - Configurable CORS headers
 - Support for preflight requests
-- Origin validation
+- Origin validation with substring matching
 - Method and header controls
 - Environment-aware behavior (different defaults for development/production)
 
@@ -146,7 +146,6 @@ The `cors` package implements Cross-Origin Resource Sharing middleware with comp
 ```go
 type CORSConfig struct {
     AllowOrigin      string   `mapstructure:"allow_origin,omitempty"`
-    AllowedOrigins   []string `mapstructure:"allowed_origins,omitempty"`
     AllowMethods     string   `mapstructure:"allow_methods,omitempty"`
     AllowHeaders     string   `mapstructure:"allow_headers,omitempty"`
     AllowCredentials bool     `mapstructure:"allow_credentials,omitempty"`
@@ -157,14 +156,19 @@ type CORSConfig struct {
 ```
 
 **Configuration Details:**
-- `AllowOrigin`: Specifies the allowed origin for CORS requests. Default is "*".
-- `AllowedOrigins`: List of specific origins that are allowed.
+- `AllowOrigin`: Specifies the allowed origin for CORS requests. Uses substring matching - if the value appears anywhere in the request's Origin header, it's considered a match. Default is "*".
 - `AllowMethods`: Specifies the allowed HTTP methods. Default is "*".
 - `AllowHeaders`: Specifies the allowed headers. Default is "*".
 - `AllowCredentials`: Whether to allow credentials. Default is true.
 - `ExposeHeaders`: Headers that should be exposed to the client. Default is "*".
 - `MaxAge`: How long the results of a preflight request can be cached.
 - `ExemptMethods`: Methods that are exempt from CORS checks (typically OPTIONS).
+
+**Origin Matching Logic:**
+The CORS middleware uses substring matching for origin validation:
+- When `AllowOrigin` is set to "*", all origins are allowed
+- When `AllowOrigin` is set to a specific value, it checks if that value appears anywhere within the request's Origin header
+- For example, if `AllowOrigin` is "example.com", it will match requests from "http://example.com", "https://api.example.com", "http://subdomain.example.com", etc.
 
 **Default Behavior:**
 - In production mode, more restrictive defaults are applied
