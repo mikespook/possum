@@ -1,0 +1,7 @@
+services:
+  possum:
+    build:
+      context: ../..
+      dockerfile: examples/helloworld/Dockerfile
+    ports:
+      - "9000:9000"
