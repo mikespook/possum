@@ -1,5 +1,5 @@
 services:
   possum:
-    image: mikespook/possum-helloworld:1.0.0
+    image: mikespook/possum-helloworld:1.0.1
     ports:
       - "9000:9000"
