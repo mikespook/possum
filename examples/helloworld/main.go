@@ -7,14 +7,18 @@ import (
 	"github.com/mikespook/possum"
 )
 
-var gitCommit string
+var (
+	gitCommit string
+	Version string
+)
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		resp := possum.NewResponse(r)
 		resp.SetData(map[string]string{
-			"message": "Hello world",
+			"message":    "Hello world",
 			"git-commit": gitCommit,
+			"version": Version,
 		})
 		resp.Write(w)
 	})

@@ -1,7 +1,5 @@
 services:
   possum:
-    build:
-      context: ../..
-      dockerfile: examples/helloworld/Dockerfile
+    image: mikespook/possum-helloworld:v1.0.0
     ports:
       - "9000:9000"
