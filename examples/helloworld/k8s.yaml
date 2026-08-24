@@ -23,9 +23,25 @@ kind: Service
 metadata:
   name: possum
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: possum
   ports:
     - port: 9123
       targetPort: 9000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: possum
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: possum
+                port:
+                  number: 9123
