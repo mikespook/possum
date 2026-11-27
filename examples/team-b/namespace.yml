@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-b
+  labels:
+    io.portainer.idp.managed: 'true'
+    io.portainer.idp.deploy-target: '2'
+    pod-security.kubernetes.io/warn: baseline
+    pod-security.kubernetes.io/audit: baseline
