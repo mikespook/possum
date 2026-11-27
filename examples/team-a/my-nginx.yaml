@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-nginx
+  namespace: team-a
+  labels:
+    app: my-nginx
+    managed-by: portainer-idp
+  annotations:
+    portainer-idp/git-target-id: '1'
+    portainer-idp/git-branch: main
+    portainer-idp/git-path: examples/team-a/my-nginx.yaml
+    portainer-idp/edge-stack: 'true'
+    portainer-idp/edge-group-ids: '2'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-nginx
+  template:
+    metadata:
+      labels:
+        app: my-nginx
+        managed-by: portainer-idp
+    spec:
+      containers:
+        - name: httpd
+          image: nginx:latest
+          imagePullPolicy: Always
