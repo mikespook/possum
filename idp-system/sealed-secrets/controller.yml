@@ -1,0 +1,285 @@
+# portainer-idp-system: sealed-secrets@0.40.0
+# Bitnami Sealed Secrets controller v0.40.0, a Portainer-IDP system
+# application. Committed by Portainer-IDP (Cluster Readiness → Install) and
+# deployed to the environments in the idp-system deploy target.
+#
+# Two things are deliberately NOT in this file, and must never be added:
+#  - the SealedSecret CustomResourceDefinition. Removing this stack from an
+#    environment deletes what it applied, and deleting the CRD deletes every
+#    SealedSecret and every Secret they own. Portainer-IDP applies the CRD
+#    itself and never deletes it.
+#  - the sealing key (portainer-sealing-key). It never leaves the
+#    clusters; Portainer-IDP copies it between them directly.
+#
+# Upgrades come from Portainer-IDP: a newer bundled version is committed here
+# on the next Install or Repair.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-controller
+    app.kubernetes.io/managed-by: portainer-idp
+  name: sealed-secrets-controller
+  namespace: kube-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-controller
+    app.kubernetes.io/managed-by: portainer-idp
+  name: sealed-secrets-controller
+  namespace: kube-system
+spec:
+  minReadySeconds: 30
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: sealed-secrets-controller
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        name: sealed-secrets-controller
+        app: sealed-secrets-controller
+    spec:
+      containers:
+        - args:
+            - --key-renew-period=0
+          command:
+            - controller
+          env: []
+          image: docker.io/bitnami/sealed-secrets-controller:0.40.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          name: sealed-secrets-controller
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 8081
+              name: metrics
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          stdin: false
+          tty: false
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp
+      imagePullSecrets: []
+      initContainers: []
+      securityContext:
+        fsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: sealed-secrets-controller
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir: {}
+          name: tmp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-controller
+    app.kubernetes.io/managed-by: portainer-idp
+  name: sealed-secrets-controller
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sealed-secrets-key-admin
+subjects:
+  - kind: ServiceAccount
+    name: sealed-secrets-controller
+    namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-key-admin
+    app.kubernetes.io/managed-by: portainer-idp
+  name: sealed-secrets-key-admin
+  namespace: kube-system
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - secrets
+    verbs:
+      - create
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations: {}
+  labels:
+    name: secrets-unsealer
+    app.kubernetes.io/managed-by: portainer-idp
+  name: secrets-unsealer
+rules:
+  - apiGroups:
+      - bitnami.com
+    resources:
+      - sealedsecrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - bitnami.com
+    resources:
+      - sealedsecrets/status
+    verbs:
+      - update
+  - apiGroups:
+      - ''
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - ''
+    resources:
+      - namespaces
+    verbs:
+      - get
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-controller
+    app.kubernetes.io/managed-by: portainer-idp
+    app: sealed-secrets-controller
+  name: sealed-secrets-controller
+  namespace: kube-system
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    name: sealed-secrets-controller
+  type: ClusterIP
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-service-proxier
+    app.kubernetes.io/managed-by: portainer-idp
+  name: sealed-secrets-service-proxier
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sealed-secrets-service-proxier
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: system:authenticated
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-service-proxier
+    app.kubernetes.io/managed-by: portainer-idp
+  name: sealed-secrets-service-proxier
+  namespace: kube-system
+rules:
+  - apiGroups:
+      - ''
+    resourceNames:
+      - sealed-secrets-controller
+    resources:
+      - services
+    verbs:
+      - get
+  - apiGroups:
+      - ''
+    resourceNames:
+      - 'http:sealed-secrets-controller:'
+      - http:sealed-secrets-controller:http
+      - sealed-secrets-controller
+    resources:
+      - services/proxy
+    verbs:
+      - create
+      - get
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-controller-metrics
+    app.kubernetes.io/managed-by: portainer-idp
+    app: sealed-secrets-controller
+  name: sealed-secrets-controller-metrics
+  namespace: kube-system
+spec:
+  ports:
+    - port: 8081
+      targetPort: 8081
+  selector:
+    name: sealed-secrets-controller
+  type: ClusterIP
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations: {}
+  labels:
+    name: sealed-secrets-controller
+    app.kubernetes.io/managed-by: portainer-idp
+  name: sealed-secrets-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: secrets-unsealer
+subjects:
+  - kind: ServiceAccount
+    name: sealed-secrets-controller
+    namespace: kube-system
